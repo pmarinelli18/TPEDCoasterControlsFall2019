@@ -5,7 +5,7 @@ and built from scratch.
 
 
 Things to do:
--Create a diagram to show how the controls system will run\n
+-Create a diagram to show how the controls system will run/n
 -Write the software will be running the model
 
 
