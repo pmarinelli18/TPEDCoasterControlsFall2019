@@ -4,7 +4,7 @@ Within this project we our designing a small-scale working model of a roller coa
 and built from scratch.
 
 
-Things to do:
+Things to do:<br />
 -Create a diagram to show how the controls system will run<br />
 -Write the software will be running the model<br />
 
