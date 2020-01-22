@@ -5,8 +5,8 @@ and built from scratch.
 
 
 Things to do:
--Create a diagram to show how the controls system will run/n
--Write the software will be running the model
+-Create a diagram to show how the controls system will run<br />
+-Write the software will be running the model<br />
 
 
 Design Team DropBox
