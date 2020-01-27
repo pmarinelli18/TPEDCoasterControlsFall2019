@@ -20,6 +20,7 @@ void setup()
   //sets up LEDs as temp for the motors
 
   attachInterrupt(digitalPinToInerrupt(StationPin)/*station sensor*/, ISRStationFall, falling);
+  attachInterrupt(digitalPinToInerrupt(StationPin)/*station sensor*/, ISRStationRise, rising);
   attachInterrupt(digitalPinToInerrupt(preBreakPin)/*preBreak sensor*/, ISRPreBreakRise, rising);
   attachInterrupt(digitalPinToInerrupt(preBreakPin)/*preBreak sensor*/, ISRPreBreakFall, falling);
   attachInterrupt(digitalPinToInerrupt(breakPin)/*break sensor*/, ISRBreakFall, falling);
@@ -28,7 +29,7 @@ void setup()
   digitalWrite(station_motor, LOW);
   digitalWrite(lift_motor, LOW);
   digitalWrite(break_run_motor, LOW);
-
+  
 }
 
 void loop() 
@@ -36,34 +37,28 @@ void loop()
   StationSensor = digitalRead(stationPin);
   liftSensor = digitalRead(liftPin);
   breakSensor = digitalRead(breakPin);
-  if(stationSensor =HIGH)
-  {
-     digitalWrite(station_motor, LOW); // stop station motor
-    if(layout_OC = false)
-    {
-      
+
+  if(stationSensor =HIGH) {
+     //digitalWrite(station_motor, LOW); // stop station motor
+      if(layout_OC = false) {
        digitalWrite(station_motor, HIGH); //start station motor
        digitalWrite(lift_motor, HIGH); //start lift motor
     }
   }
-      if(liftSensor =HIGH)
-  {
-    if(break_OC = true)
-       digitalWrite(lift_motor, LOW); //stop lift motor
-    else
-       digitalWrite(lift_motor, HIGH);//start lift motor
+  
+  if(liftSensor =HIGH) {
+    if(break_OC = true) {
+       digitalWrite(lift_motor, LOW); //stop lift motor      
+    }
+    else {
+       digitalWrite(lift_motor, HIGH);//start lift motor      
+    }
   }
-    if(breakSensor =HIGH)
-  {
-    // stop break motor
-    if(station_OC = false)
-      digitalWrite(break_run_motor, HIGH)//start break motor
-  }
-    if(breakSensor =HIGH)
-  {
+  
+  
+  if(breakSensor =HIGH) {
     digitalWrite(break_run_motor, LOW)// stop break motor
-    if(station_OC = false)
-    {
+    if(station_OC = false) {
        digitalWrite(station_motor, HIGH);//start station motor
       //start break motor
     }
@@ -101,6 +96,10 @@ void ISRStationFall() // leaving station
 {
   station_OC = false;
   layout_OC = true;
+  digitalWrite(station_motor, LOW); //stop station motor
+}
+void ISRStationRise() // entering station, stop car in staton
+{
   digitalWrite(station_motor, LOW); //stop station motor
 }
 void ISRPreBreakRise() //entering breakrun
