@@ -1,4 +1,4 @@
-<h2>Basics</h2>
+Basics
 Git init //initialize
 Git clone // clone an existing
 Git add//stage files
@@ -11,7 +11,7 @@ Code filename //allows you to open a file
 Git pull  //pull current code from remote repository
 Git add .  // adds everything but ignored files
 
-<h2>Branching</h2>
+Branching
 Git branch branch_name //create branch
 Git checkout branch_name //switch to branch
 Git merge branch_name //Merge branch to master
