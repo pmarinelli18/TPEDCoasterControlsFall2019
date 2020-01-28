@@ -6,13 +6,13 @@ Within this project we our designing a small-scale working model of a roller coa
 and built from scratch.
 
 
-Things to do:<br />
+<h1>Things to do:</h1><br />
 -Create a diagram to show how the controls system will run<br />
 -Write the software will be running the model<br />
 -Test the system to ensure everything works<br />
 -Wire buttons and switches to create a control panel<br />
 -Create a separate program that will operate show equipment (LEDs, Sounds etc)<br />
-Different Modes<br />
+<h1>Different Modes</h1><br />
 -Normal Mode<br />
 -Display Mode<br />
 -Manual Mode<br />
