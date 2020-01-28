@@ -13,9 +13,9 @@ and built from scratch.
 -Create a separate program that will operate show equipment (LEDs, Sounds etc)<br />
 
 <h3>Different Modes</h3>
--Normal Mode<br />
--Display Mode<br />
--Manual Mode<br />
+-Normal Mode- some other mode i forgot<br />
+-Display Mode- Will continue to run for a given amount of time with no action needed<br />
+-Manual Mode- Will only allow the next coaster to go when an input is given<br />
 
 
 <h2>Getting Started?</h2>
