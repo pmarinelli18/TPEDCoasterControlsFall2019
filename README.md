@@ -29,7 +29,7 @@ At this point you can now clone the repository onto your local machine using the
 git clone HTTP_URL_FROM_GREEN_BUTTON<br /><br />
 Now you have all the files we have been working on.
 next we will need to download the IDE for arduino to be able to run are program<br />
-https://www.arduino.cc/en/Main/Software<br />
+https://www.arduino.cc/en/Main/Software<br /><br />
 
 Design Team DropBox<br />
 https://www.dropbox.com/sh/4a9rzsodvtuo00k/AAD096ctILZ8-KGnmdUy5A3Wa?dl=0
