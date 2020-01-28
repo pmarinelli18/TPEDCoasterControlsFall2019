@@ -13,7 +13,7 @@ Different Modes<br />
 -manual Mode<br />
 
 Getting Started?<br />
-here are some things to download before working on programming the logic behind the coaster.<br />
+Here are some things to download before working on programming the logic behind the coaster.<br />
 To be able to push and pull from this repository to your local machine we use gitBash<br />
 https://git-scm.com/downloads<br />
 next we will need to download the IDE for arduino to be able to run are program<br />
