@@ -1,4 +1,6 @@
 # TPEDCoasterControlsFall2019
+<img src="images/TPEDCoasterDesign.PNG" align="center" height="250px" width=auto >
+
 This Repository is dedicated to the controls team for the UF Theme Park Engineering and Design Club. 
 Within this project we our designing a small-scale working model of a roller coaster that we designed 
 and built from scratch.
@@ -7,10 +9,19 @@ and built from scratch.
 Things to do:<br />
 -Create a diagram to show how the controls system will run<br />
 -Write the software will be running the model<br />
+-Test the system to ensure everything works<br />
+-Wire buttons and switches to create a control panel<br />
+-Create a separate program that will operate show equipment (LEDs, Sounds etc)<br />
 Different Modes<br />
 -Normal Mode<br />
 -Display Mode<br />
 -Manual Mode<br />
+
+
+
+
+
+
 
 Getting Started?<br />
 Here are some things to download before working on programming the logic behind the coaster.<br />
