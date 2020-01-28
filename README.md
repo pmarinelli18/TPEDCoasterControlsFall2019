@@ -22,11 +22,11 @@ and built from scratch.
 Here are some things to download before working on programming the logic behind the coaster.<br />
 To be able to push and pull from this repository to your local machine we use git and gitBash<br />
 https://git-scm.com/downloads<br />
-once you download git you could then create a folder for your TPED files, rightclick inside the folder and select "Git Bash Here". With your GitHub username and email fill in the following command:<br />
+once you download git you could then create a folder for your TPED files, rightclick inside the folder and select "Git Bash Here". With your GitHub username and email fill in the following command:<br /><br />
 git config --global user.name "Your name here"<br />
-git config --global user.email "your_email@example.com"<br />
-At this point you can now clone the repository onto your local machine using the link from this page when clicking the green button and the following command:<br />
-git clone HTTP_URL_FROM_GREEN_BUTTON<br />
+git config --global user.email "your_email@example.com"<br /><br />
+At this point you can now clone the repository onto your local machine using the link from this page when clicking the green button and the following command:<br /><br />
+git clone HTTP_URL_FROM_GREEN_BUTTON<br /><br />
 Now you have all the files we have been working on.
 next we will need to download the IDE for arduino to be able to run are program<br />
 https://www.arduino.cc/en/Main/Software<br />
