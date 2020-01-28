@@ -16,4 +16,8 @@ next we will need to download the IDE for arduino to be able to run are program<
 https://www.arduino.cc/en/Main/Software<br />
 Design Team DropBox<br />
 https://www.dropbox.com/sh/4a9rzsodvtuo00k/AAD096ctILZ8-KGnmdUy5A3Wa?dl=0
--
+
+
+normal Mode
+display Mode
+manual Mode
