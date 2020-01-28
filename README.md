@@ -6,13 +6,13 @@ Within this project we our designing a small-scale working model of a roller coa
 and built from scratch.
 
 
-<h1>Things to do:</h1><br />
+<h2>Things to do:</h2><br />
 -Create a diagram to show how the controls system will run<br />
 -Write the software will be running the model<br />
 -Test the system to ensure everything works<br />
 -Wire buttons and switches to create a control panel<br />
 -Create a separate program that will operate show equipment (LEDs, Sounds etc)<br />
-<h1>Different Modes</h1><br />
+<h3>Different Modes</h3><br />
 -Normal Mode<br />
 -Display Mode<br />
 -Manual Mode<br />
@@ -23,7 +23,7 @@ and built from scratch.
 
 
 
-Getting Started?<br />
+<h2>Getting Started?</h2><br />
 Here are some things to download before working on programming the logic behind the coaster.<br />
 To be able to push and pull from this repository to your local machine we use gitBash<br />
 https://git-scm.com/downloads<br />
