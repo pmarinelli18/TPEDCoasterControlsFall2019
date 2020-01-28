@@ -8,9 +8,9 @@ Things to do:<br />
 -Create a diagram to show how the controls system will run<br />
 -Write the software will be running the model<br />
 Different Modes<br />
-normal Mode<br />
-display Mode<br />
-manual Mode<br />
+-normal Mode<br />
+-display Mode<br />
+-manual Mode<br />
 
 Getting Started?<br />
 here are some things to download before working on programming the logic behind the coaster.<br />
