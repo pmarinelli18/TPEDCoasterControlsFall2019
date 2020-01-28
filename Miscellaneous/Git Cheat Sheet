@@ -1,0 +1,24 @@
+<h2>Basics</h2>
+Git init //initialize
+Git clone // clone an existing
+Git add//stage files
+Git commit -m "description of what you did" //commit changes
+Git push -u nameOfRepo branchYourPushingTo// push to remote repository, before pushing you must commit
+Git add file.txt // adds the file
+Git remote add Nametocallrepository(origin) http://urlOfRepository //adds a repository without cloning
+Git remote -v // 
+Code filename //allows you to open a file
+Git pull  //pull current code from remote repository
+Git add .  // adds everything but ignored files
+
+<h2>Branching</h2>
+Git branch branch_name //create branch
+Git checkout branch_name //switch to branch
+Git merge branch_name //Merge branch to master
+
+
+Git branch PM_WhatIDid
+
+Git reset [--hard/soft/mixed] //resets branch to master
+Git stash //puts aside changes on local side
+Git stash pop// puts changes back
