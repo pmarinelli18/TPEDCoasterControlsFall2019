@@ -10,13 +10,13 @@
   int buttonPin = 5;
   
   // put your setup code here, to run once:
-  bool station_OC = true;
-  bool breakRun_OC = true;
+  bool station_OC = false;
+  bool breakRun_OC = false;
   bool layout_OC = false;
   int lastStationState = 0;
-  int lastLiftState = 1;
-  int lastPreBreakState = 1;
-  int lastBreakState = 1;
+  int lastLiftState = 0;
+  int lastPreBreakState = 0;
+  int lastBreakState = 0;
  int dispatchButton = 0;
 void setup() 
 {
@@ -32,7 +32,10 @@ void setup()
   pinMode(breakPin, INPUT);
   pinMode(buttonPin, INPUT);
 
-  pinMode(7, OUTPUT);  //layoutOC led        
+  pinMode(7, OUTPUT);  //layoutOC led  
+  pinMode(8, OUTPUT);  //layoutOC led        
+  pinMode(9, OUTPUT);  //layoutOC led        
+
   pinMode(station_motor, OUTPUT);         
   pinMode(lift_motor, OUTPUT);         
   pinMode(break_run_motor, OUTPUT);         
@@ -42,24 +45,27 @@ void setup()
   digitalWrite(station_motor, LOW);
   digitalWrite(lift_motor, LOW);
   digitalWrite(break_run_motor, LOW);
-    Serial.begin(9600);
+  Serial.begin(9600);
+  scanTrackForInitialValues();
 
 }
 
 void loop() 
 {
   dispatchButton = digitalRead(buttonPin);
+  //digitalWrite(3, HIGH);
+
   
     digitalWrite(7, station_OC); //print out layout OC
-  ISRLift();
+    digitalWrite(8, layout_OC); //layout_OC
+    digitalWrite(9, breakRun_OC); 
+      
+ ISRLift();
   ISRBreak();
   ISRPreBreak();
   ISRStation();
 //Serial.println(dispatchButton);
 
-  if (dispatchButton == 1) {
-   // Serial.println("button pressed");
-  }
   int StationSensor = not digitalRead(StationPin);
   int liftSensor = not digitalRead(liftPin);
   int breakSensor = not digitalRead(breakPin);
@@ -68,7 +74,6 @@ void loop()
 
   if((StationSensor == HIGH) && (layout_OC == 0) && (dispatchButton == 1)) {
      //digitalWrite(station_motor, LOW); // stop station motor
-      //if((layout_OC == 0) && (dispatchButton == 1)){ //(layout_OC == false) && (dispatchButton == 1)
        Serial.println("button pressed here");
        digitalWrite(station_motor, HIGH); //start station motor
        digitalWrite(lift_motor, HIGH); //start lift motor
@@ -88,6 +93,7 @@ void loop()
   if(breakSensor == HIGH) {   
     if(station_OC == false) {
        digitalWrite(station_motor, HIGH);//start station motor
+       digitalWrite(break_run_motor, HIGH);//start station motor
       //start break motor
     }
     else {
@@ -103,16 +109,18 @@ void loop()
 }*/
 void ISRStation() // station
 {
-   delay(100);
-      int sensorState = digitalRead(StationPin);
+      int sensorState = not digitalRead(StationPin);
         if (sensorState == 1 && lastStationState == 0) {
+             delay(100);
+             Serial.println("entering Station");
+            digitalWrite(station_motor, LOW); //stop station motor
+            station_OC = true;
+         } 
+        if (sensorState == 0 && lastStationState == 1) {
+             delay(100);
             Serial.println("leaving Station");
             station_OC = false;
             layout_OC = true;
-            digitalWrite(station_motor, LOW); //stop station motor
-         } 
-        if (sensorState == 0 && lastStationState == 1) {
-             Serial.println("entering Station");
             digitalWrite(station_motor, LOW); //stop station motor
 
           }
@@ -122,49 +130,73 @@ void ISRStation() // station
 
 void ISRPreBreak() //entering breakrun
 {
-   delay(100);
-      int sensorState = digitalRead(preBreakPin);
+      int sensorState = not digitalRead(preBreakPin);
         if (sensorState == 1 && lastPreBreakState == 0) {
-            Serial.println("leaving pre-breakrun...off layout");
-            layout_OC =false;
+            delay(100);
+            Serial.println("entering pre-break-run");
+            digitalWrite(break_run_motor, HIGH); //start break motor
             breakRun_OC = true;
          } 
         if (sensorState == 0 && lastPreBreakState == 1) {
-            Serial.println("entering pre-break-run");
-            digitalWrite(break_run_motor, HIGH); //start break motor
+            delay(100);
+            Serial.println("leaving pre-breakrun...off layout");
+            layout_OC =false;
+       //     breakRun_OC = true;
           }
       lastPreBreakState = sensorState;
 }
 
 void ISRBreak() //leaving breakrun
 {
-  delay(100);
-      int sensorState = digitalRead(breakPin);
+      int sensorState = not digitalRead(breakPin);
         if (sensorState == 1 && lastBreakState == 0) {
-             Serial.println("left breakrun");
-             station_OC = true;
-             digitalWrite(break_run_motor, LOW);//stop break motor
+            delay(100);
+            Serial.println("at Breakrun");
+           // station_OC = false;
+            breakRun_OC = true; //sets up initial state
+            //digitalWrite(break_run_motor, LOW);//stop break motor
 
          } 
         if (sensorState == 0 && lastBreakState == 1) {
-            Serial.println("at Breakrun");
-            breakRun_OC = false;
-            station_OC = false;
-            digitalWrite(break_run_motor, LOW);//stop break motor
+            delay(100);
+             Serial.println("left breakrun");
+             station_OC = true;
+             breakRun_OC = false;
+             digitalWrite(break_run_motor, LOW);//stop break motor
+    
           }
       lastBreakState = sensorState;
 }
 
-void ISRLift() // leaving station
+void ISRLift() // leaving lift
 {
-      int sensorState = digitalRead(liftPin);
+      int sensorState = not digitalRead(liftPin);
         if (sensorState == 1 && lastLiftState == 0) {
-            Serial.println("leaving lift hill");
-            digitalWrite(lift_motor, LOW);//stop lift motor
+            delay(100);
+              Serial.println("entering top of Lift");
             } 
         if (sensorState == 0 && lastLiftState == 1) {
-
-            Serial.println("entering top of Lift");
+            delay(100);
+            Serial.println("leaving lift hill");
+            digitalWrite(lift_motor, LOW);//stop lift motor
           }
       lastLiftState = sensorState;
+}
+//Config initial occupy values based on sensor input
+void scanTrackForInitialValues(){
+  int stationSensor = not digitalRead(StationPin);
+  int liftSensor = not digitalRead(liftPin);
+  int brakeSensor = not digitalRead(breakPin);
+
+  if (stationSensor == HIGH){
+    station_OC = true;
+  }
+
+  if (brakeSensor == HIGH){
+    breakRun_OC = true;
+  }
+  
+  if (liftSensor == HIGH){
+    layout_OC = true;
+  }
 }
