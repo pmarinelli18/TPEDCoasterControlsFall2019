@@ -23,13 +23,13 @@ void setup()
   //sets up LEDs as temp for the motors
 
   //attachInterrupt(digitalPinToInterrupt(StationPin)/*station sensor*/, ISRStation, CHANGE);
-  //attachInterrupt(digitalPinToInterrupt(preBreakPin)/*preBreak sensor*/, ISRPreBreak, CHANGE);
-  //attachInterrupt(digitalPinToInterrupt(breakPin)/*break sensor*/, ISRBreak, CHANGE);
+  //attachInterrupt(digitalPinToInterrupt(preBrakePin)/*preBrake sensor*/, ISRPreBrake, CHANGE);
+  //attachInterrupt(digitalPinToInterrupt(brakePin)/*brake sensor*/, ISRBrake, CHANGE);
   //attachInterrupt(digitalPinToInterrupt(liftPin)/*lift sensor*/, ISRLift, CHANGE);
   pinMode(StationPin, INPUT);
   pinMode(liftPin, INPUT);
-  pinMode(preBreakPin, INPUT);
-  pinMode(breakPin, INPUT);
+  pinMode(preBrakePin, INPUT);
+  pinMode(brakePin, INPUT);
   pinMode(buttonPin, INPUT);
 
   pinMode(7, OUTPUT);  //layoutOC led  
@@ -41,7 +41,6 @@ void setup()
   pinMode(break_run_motor, OUTPUT);         
 
 
-  
   digitalWrite(station_motor, LOW);
   digitalWrite(lift_motor, LOW);
   digitalWrite(break_run_motor, LOW);
@@ -50,7 +49,7 @@ void setup()
 
 }
 
-void loop() 
+void loop()
 {
   dispatchButton = digitalRead(buttonPin);
   //digitalWrite(3, HIGH);
@@ -64,7 +63,7 @@ void loop()
   ISRBreak();
   ISRPreBreak();
   ISRStation();
-//Serial.println(dispatchButton);
+  //Serial.println(dispatchButton);
 
   int StationSensor = not digitalRead(StationPin);
   int liftSensor = not digitalRead(liftPin);
@@ -79,16 +78,15 @@ void loop()
        digitalWrite(lift_motor, HIGH); //start lift motor
    // }
   }
-  
-  if(liftSensor == HIGH) {
-    if(breakRun_OC == true) {
-       digitalWrite(lift_motor, LOW); //stop lift motor      
+
+  if (liftSensor == HIGH) {
+    if (brakeRun_OC == true) {
+      digitalWrite(lift_motor, LOW); //stop lift motor
     }
     else {
-       digitalWrite(lift_motor, HIGH);//start lift motor      
+      digitalWrite(lift_motor, HIGH);//start lift motor
     }
-  }
-  
+  }  
   
   if(breakSensor == HIGH) {   
     if(station_OC == false) {
@@ -97,16 +95,16 @@ void loop()
       //start break motor
     }
     else {
-      digitalWrite(break_run_motor, LOW);// stop break motor
+      digitalWrite(brake_run_motor, LOW);// stop brake motor
     }
   }
 
 }
 /*void ISRLift()  //gets triggered on falling edge
-{
+  {
   lift_OC = false;
   layout_OC = true;
-}*/
+  }*/
 void ISRStation() // station
 {
       int sensorState = not digitalRead(StationPin);
@@ -125,10 +123,9 @@ void ISRStation() // station
 
           }
       lastStationState = sensorState;
-
 }
 
-void ISRPreBreak() //entering breakrun
+void ISRPreBrake() //entering brakerun
 {
       int sensorState = not digitalRead(preBreakPin);
         if (sensorState == 1 && lastPreBreakState == 0) {
@@ -146,7 +143,7 @@ void ISRPreBreak() //entering breakrun
       lastPreBreakState = sensorState;
 }
 
-void ISRBreak() //leaving breakrun
+void ISRBrake() //leaving brakerun
 {
       int sensorState = not digitalRead(breakPin);
         if (sensorState == 1 && lastBreakState == 0) {
