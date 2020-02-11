@@ -1,21 +1,21 @@
   int StationPin = 12;
   int liftPin = 13;
-  int preBreakPin = 10;
-  int breakPin = 11;
+  int preBrakePin = 10;
+  int brakePin = 11;
 
   int station_motor = 4;
   int lift_motor = 3;
-  int break_run_motor = 2;
+  int brake_run_motor = 2;
 
   int buttonPin = 5;
   
   // put your setup code here, to run once:
   bool station_OC = false;
-  bool breakRun_OC = false;
+  bool brakeRun_OC = false;
   bool layout_OC = false;
   int lastStationState = 0;
   int lastLiftState = 0;
-  int lastPreBreakState = 0;
+  int lastPrebrakeState = 0;
   int lastBreakState = 0;
  int dispatchButton = 0;
 void setup() 
@@ -38,12 +38,12 @@ void setup()
 
   pinMode(station_motor, OUTPUT);         
   pinMode(lift_motor, OUTPUT);         
-  pinMode(break_run_motor, OUTPUT);         
+  pinMode(brake_run_motor, OUTPUT);         
 
 
   digitalWrite(station_motor, LOW);
   digitalWrite(lift_motor, LOW);
-  digitalWrite(break_run_motor, LOW);
+  digitalWrite(brake_run_motor, LOW);
   Serial.begin(9600);
   scanTrackForInitialValues();
 
@@ -57,17 +57,17 @@ void loop()
   
     digitalWrite(7, station_OC); //print out layout OC
     digitalWrite(8, layout_OC); //layout_OC
-    digitalWrite(9, breakRun_OC); 
+    digitalWrite(9, brakeRun_OC); 
       
  ISRLift();
-  ISRBreak();
-  ISRPreBreak();
+  ISRBrake();
+  ISRPreBrake();
   ISRStation();
   //Serial.println(dispatchButton);
 
   int StationSensor = not digitalRead(StationPin);
   int liftSensor = not digitalRead(liftPin);
-  int breakSensor = not digitalRead(breakPin);
+  int breakSensor = not digitalRead(brakePin);
 //Serial.println("Printing");
 //Serial.println(liftSensor);
 
@@ -91,7 +91,7 @@ void loop()
   if(breakSensor == HIGH) {   
     if(station_OC == false) {
        digitalWrite(station_motor, HIGH);//start station motor
-       digitalWrite(break_run_motor, HIGH);//start station motor
+       digitalWrite(brake_run_motor, HIGH);//start station motor
       //start break motor
     }
     else {
@@ -127,39 +127,39 @@ void ISRStation() // station
 
 void ISRPreBrake() //entering brakerun
 {
-      int sensorState = not digitalRead(preBreakPin);
-        if (sensorState == 1 && lastPreBreakState == 0) {
+      int sensorState = not digitalRead(preBrakePin);
+        if (sensorState == 1 && lastPrebrakeState == 0) {
             delay(100);
             Serial.println("entering pre-break-run");
-            digitalWrite(break_run_motor, HIGH); //start break motor
-            breakRun_OC = true;
+            digitalWrite(brake_run_motor, HIGH); //start break motor
+            brakeRun_OC = true;
          } 
-        if (sensorState == 0 && lastPreBreakState == 1) {
+        if (sensorState == 0 && lastPrebrakeState == 1) {
             delay(100);
             Serial.println("leaving pre-breakrun...off layout");
             layout_OC =false;
-       //     breakRun_OC = true;
+       //     brakeRun_OC = true;
           }
-      lastPreBreakState = sensorState;
+      lastPrebrakeState = sensorState;
 }
 
 void ISRBrake() //leaving brakerun
 {
-      int sensorState = not digitalRead(breakPin);
+      int sensorState = not digitalRead(brakePin);
         if (sensorState == 1 && lastBreakState == 0) {
             delay(100);
             Serial.println("at Breakrun");
            // station_OC = false;
-            breakRun_OC = true; //sets up initial state
-            //digitalWrite(break_run_motor, LOW);//stop break motor
+            brakeRun_OC = true; //sets up initial state
+            //digitalWrite(brake_run_motor, LOW);//stop break motor
 
          } 
         if (sensorState == 0 && lastBreakState == 1) {
             delay(100);
              Serial.println("left breakrun");
              station_OC = true;
-             breakRun_OC = false;
-             digitalWrite(break_run_motor, LOW);//stop break motor
+             brakeRun_OC = false;
+             digitalWrite(brake_run_motor, LOW);//stop break motor
     
           }
       lastBreakState = sensorState;
@@ -183,14 +183,14 @@ void ISRLift() // leaving lift
 void scanTrackForInitialValues(){
   int stationSensor = not digitalRead(StationPin);
   int liftSensor = not digitalRead(liftPin);
-  int brakeSensor = not digitalRead(breakPin);
+  int brakeSensor = not digitalRead(brakePin);
 
   if (stationSensor == HIGH){
     station_OC = true;
   }
 
   if (brakeSensor == HIGH){
-    breakRun_OC = true;
+    brakeRun_OC = true;
   }
   
   if (liftSensor == HIGH){
