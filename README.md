@@ -9,9 +9,13 @@ and built from scratch.
 -Completed-Create a diagram to show how the controls system will run<br />
 -Completed-Develop prgram to handle one train<br />
 -Completed-Test Sensors with one train<br />
--InProgress-Write the software will be running the model<br />
+-Completed-Develop prgram to handle multiple trains<br />
+-Completed-Test Sensors with multiple trains<br />
+-In Progress-Write the software to run motors<br />
+-In Progress-Write the software to switch modes<br />
+-Develop design for control box<br />
+-write software for different modes<br />
 -Test the system to ensure everything works<br />
--Wire buttons and switches to create a control panel<br />
 -Create a separate program that will operate show equipment (LEDs, Sounds etc)<br />
 
 <h3>Different Modes</h3>
