@@ -15,6 +15,13 @@ int liftHOW = 10;
   int breakLOW = 15;
 
   int buttonPin = 12;
+  int buttonPin = 5;
+
+  int switchLeft = 33;
+  int switchRight = 34;
+  int autoLED = 35;
+   int showLED = 36;
+  int maintenceLED = 37;
   
   // put your setup code here, to run once:
   bool station_OC = false;
@@ -61,12 +68,42 @@ void setup()
   //digitalWrite(lift_motor, LOW);
   analogWrite(lift_motor, 0);
   digitalWrite(brake_run_motor, LOW);
+
+  pinMode(switchLeft, INPUT);
+  pinMode(switchRight, INPUT);
+
+  pinMode(autoLED, OUTPUT);
+  pinMode(showLED, OUTPUT);
+  pinMode(maintenceLED, OUTPUT);
+  
   Serial.begin(9600);
   scanTrackForInitialValues();
 
 }
 
-void loop()
+void loop(){
+  digitalWrite(showLED, LOW);
+  digitalWrite(maintenceLED, LOW);
+  digitalWrite(autoLED, LOW);
+  //Show mode
+  if (digitalRead(switchLeft) == HIGH ){
+    digitalWrite(showLED, HIGH);
+  }
+  //Maintence mode
+  else if  (digitalRead(switchRight) == HIGH){
+    digitalWrite(maintenceLED, HIGH);  
+  }
+  //Auto mode
+  else {
+    autoMode();
+    digitalWrite(autoLED, HIGH);
+   
+  }
+  
+}
+
+
+void autoMode()
 {
   dispatchButton = digitalRead(buttonPin);
   //digitalWrite(3, HIGH);
