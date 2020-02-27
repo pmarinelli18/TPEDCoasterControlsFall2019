@@ -1,16 +1,16 @@
   int StationPin = 3;
-  int station_motor = 4;
+  int station_motor = 44;
   int stationHIGH = 5;
   int stationLOW = 6;
 
   int liftPin = 2;
-  int lift_motor = 26;
+  int lift_motor = 46;
   int liftHIGH = 27;
-  int liftHOW = 28;
+  int liftLOW = 28;
   
   int preBrakePin = 22;
   int brakePin = 24;
-  int brake_run_motor = 13;
+  int brake_run_motor = 45;
   int breakHIGH = 14;
   int breakLOW = 15;
 
@@ -32,9 +32,9 @@
   int lastBreakState = 0;
  int dispatchButton = 0;
 
- int stationSpeed = 200;
-  int liftSpeed = 200; //liftMotor
-  int breakSpeed = 200;
+ int stationSpeed = 20;
+  int liftSpeed = 20; //liftMotor
+  int breakSpeed = 20;
 
 void setup() 
 {
