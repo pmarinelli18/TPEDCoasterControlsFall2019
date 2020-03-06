@@ -1,3 +1,4 @@
+//Location of pin input and output  
   int StationPin = 3;
   int station_motor = 44;
   int stationHIGH = 5;
@@ -11,31 +12,45 @@
   int preBrakePin = 22;
   int brakePin = 24;
   int brake_run_motor = 45;
-  int breakHIGH = 14;
-  int breakLOW = 15;
+  int brakeHIGH = 14;
+  int brakeLOW = 15;
 
   int buttonPin = 12;
 
-  int switchLeft = 33;
-  int switchRight = 34;
+  int switchShow = 33;
+  int switchMaintenance = 34;
   int autoLED = 36;
    int showLED = 35;
-  int maintenceLED = 37;
+  int maintenanceLED = 37;
+
+  int switchStationForward =   1; //NEED TO add correct pins
+  int switchStationBackward =  1;
+
+  int switchBrakeForward =   1;
+  int switchBrakeBackward =  1;
+
+  int switchLiftForward =   1;
+  int switchLiftBackward =  1;
   
-  // put your setup code here, to run once:
+  // Initializes variables at what they should be at the beginning
   bool station_OC = false;
   bool brakeRun_OC = false;
   bool layout_OC = false;
   int lastStationState = 0;
   int lastLiftState = 0;
   int lastPrebrakeState = 0;
-  int lastBreakState = 0;
+  int lastBrakeState = 0;
  int dispatchButton = 0;
 
  int stationSpeed = 20;
   int liftSpeed = 20; //liftMotor
-  int breakSpeed = 20;
+  int brakeSpeed = 20;
 
+  int maintenanceSpeedForward = 5;
+  int maintenanceSpeedBackward = -5;
+  
+  int time = -1;
+  bool run = true;
 void setup() 
 {
   //sets up LEDs as temp for the motors
@@ -65,12 +80,21 @@ void setup()
   analogWrite(lift_motor, 0);
   analogWrite(lift_motor, 0);
 
-  pinMode(switchLeft, INPUT);
-  pinMode(switchRight, INPUT);
+  pinMode(switchShow, INPUT);
+  pinMode(switchMaintenance, INPUT);
+
+  pinMode(switchStationForward, INPUT);
+  pinMode(switchStationBackward, INPUT);
+
+  pinMode(switchBrakeForward, INPUT);
+  pinMode(switchBrakeBackward, INPUT);
+
+  pinMode(switchLiftForward, INPUT);
+  pinMode(switchLiftBackward, INPUT);
 
   pinMode(autoLED, OUTPUT);
   pinMode(showLED, OUTPUT);
-  pinMode(maintenceLED, OUTPUT);
+  pinMode(maintenanceLED, OUTPUT);
   
   Serial.begin(9600);
   scanTrackForInitialValues();
@@ -79,15 +103,17 @@ void setup()
 
 void loop(){
   digitalWrite(showLED, LOW);
-  digitalWrite(maintenceLED, LOW);
+  digitalWrite(maintenanceLED, LOW);
   digitalWrite(autoLED, LOW);
   //Show mode
-  if (digitalRead(switchLeft) == HIGH ){
+  if (digitalRead(switchShow) == HIGH ){
+    showMode();
     digitalWrite(showLED, HIGH);
   }
-  //Maintence mode
-  else if  (digitalRead(switchRight) == HIGH){
-    digitalWrite(maintenceLED, HIGH);  
+  //maintenance mode
+  else if  (digitalRead(switchMaintenance) == HIGH){
+    maintenanceMode();
+    digitalWrite(maintenanceLED, HIGH);  
   }
   //Auto mode
   else {
@@ -99,6 +125,8 @@ void loop(){
 }
 
 
+
+//Will only allow the next coaster to go when an input is given
 void autoMode()
 {
   digitalWrite(stationHIGH, HIGH); //sets direction of station motor
@@ -107,8 +135,8 @@ void autoMode()
   digitalWrite(liftHIGH, HIGH); //sets direction of station motor
   digitalWrite(liftLOW, LOW);
 
-  digitalWrite(breakHIGH, HIGH); //sets direction of station motor
-  digitalWrite(breakLOW, LOW);
+  digitalWrite(brakeHIGH, HIGH); //sets direction of station motor
+  digitalWrite(brakeLOW, LOW);
 
   dispatchButton = digitalRead(buttonPin);
   
@@ -124,7 +152,7 @@ void autoMode()
 
   int StationSensor = not digitalRead(StationPin);
   int liftSensor = not digitalRead(liftPin);
-  int breakSensor = not digitalRead(brakePin);
+  int brakeSensor = not digitalRead(brakePin);
 //Serial.println("Printing");
 
   if((StationSensor == HIGH) && (layout_OC == 0) && (dispatchButton == 1)) {
@@ -143,11 +171,11 @@ void autoMode()
     }
   }  
   
-  if(breakSensor == HIGH) {   
+  if(brakeSensor == HIGH) {   
     if(station_OC == false) {
        analogWrite(station_motor, stationSpeed);
-       analogWrite(brake_run_motor, breakSpeed);
-      //start break motor
+       analogWrite(brake_run_motor, brakeSpeed);
+      //start brake motor
     }
     else {
       analogWrite(brake_run_motor, 0);
@@ -155,6 +183,107 @@ void autoMode()
   }
 
 }
+
+
+
+
+//Will continue to run for a given amount of time with no action needed
+void showMode()
+{
+  digitalWrite(stationHIGH, HIGH); //sets direction of station motor
+  digitalWrite(stationLOW, LOW);
+
+  digitalWrite(liftHIGH, HIGH); //sets direction of station motor
+  digitalWrite(liftLOW, LOW);
+
+  digitalWrite(brakeHIGH, HIGH); //sets direction of station motor
+  digitalWrite(brakeLOW, LOW);
+
+
+  //if the the button pin is pressed the trains will continue to run for 1 minute
+  dispatchButton = digitalRead(buttonPin); 
+  if(dispatchButton ==1) 
+  {
+    time = millis(); //when pressed the time is set to the current time
+  }
+  if(time != -1 && millis() < time + 60000) 
+  {
+    run = true; //as long as the recorder time + a minute is greater than the current time the train will run
+  }
+  else
+  {
+    run = false;
+  }
+  
+    digitalWrite(7, station_OC); //print out layout OC to LED
+    digitalWrite(8, layout_OC); //layout_OC
+    digitalWrite(9, brakeRun_OC); 
+      
+ ISRLift();
+  ISRBrake();
+  ISRPreBrake();
+  ISRStation();
+
+  int StationSensor = not digitalRead(StationPin);
+  int liftSensor = not digitalRead(liftPin);
+  int brakeSensor = not digitalRead(brakePin);
+//Serial.println("Printing");
+
+  if((StationSensor == HIGH) && (layout_OC == 0)&& run) {
+       Serial.println("button pressed here");
+       analogWrite(station_motor, stationSpeed);
+       analogWrite(lift_motor, liftSpeed);
+   // }
+  }
+
+  if (liftSensor == HIGH) {
+    if (brakeRun_OC == true) {
+      analogWrite(lift_motor, 0);
+    }
+    else {
+      analogWrite(lift_motor, liftSpeed);
+    }
+  }  
+  
+  if(brakeSensor == HIGH) {   
+    if(station_OC == false) {
+       analogWrite(station_motor, stationSpeed);
+       analogWrite(brake_run_motor, brakeSpeed);
+      //start brake motor
+    }
+    else {
+      analogWrite(brake_run_motor, 0);
+    }
+  }
+
+}
+
+
+//Will turn on specific motors on comand
+void maintenanceMode()
+{
+
+  if (digitalRead(switchStationForward) == HIGH ){
+    analogWrite(station_motor, maintenanceSpeedForward);
+  }
+  else if  (digitalRead(switchStationBackward) == HIGH){
+    analogWrite(station_motor, maintenanceSpeedBackward);
+  }
+  if (digitalRead(switchBrakeForward) == HIGH ){
+    analogWrite(brake_run_motor, maintenanceSpeedForward);
+  }
+  else if  (digitalRead(switchBrakeBackward) == HIGH){
+    analogWrite(brake_run_motor, maintenanceSpeedBackward);
+  }
+  if (digitalRead(switchLiftForward) == HIGH ){
+    analogWrite(lift_motor, maintenanceSpeedForward);
+  }
+  else if  (digitalRead(switchLiftBackward) == HIGH){
+    analogWrite(lift_motor, maintenanceSpeedBackward);
+  }
+}
+
+
 /*void ISRLift()  //gets triggered on falling edge
   {
   lift_OC = false;
@@ -185,13 +314,13 @@ void ISRPreBrake() //entering brakerun
       int sensorState = not digitalRead(preBrakePin);
         if (sensorState == 1 && lastPrebrakeState == 0) {
             delay(100);
-            Serial.println("entering pre-break-run");
-            analogWrite(brake_run_motor, breakSpeed);
+            Serial.println("entering pre-brake-run");
+            analogWrite(brake_run_motor, brakeSpeed);
             brakeRun_OC = true;
          } 
         if (sensorState == 0 && lastPrebrakeState == 1) {
             delay(100);
-            Serial.println("leaving pre-breakrun...off layout");
+            Serial.println("leaving pre-brakerun...off layout");
             layout_OC =false;
        //     brakeRun_OC = true;
           }
@@ -201,22 +330,22 @@ void ISRPreBrake() //entering brakerun
 void ISRBrake() //leaving brakerun
 {
       int sensorState = not digitalRead(brakePin);
-        if (sensorState == 1 && lastBreakState == 0) {
+        if (sensorState == 1 && lastBrakeState == 0) {
             delay(100);
-            Serial.println("at Breakrun");
+            Serial.println("at Brakerun");
            // station_OC = false;
             brakeRun_OC = true; //sets up initial state
 
          } 
-        if (sensorState == 0 && lastBreakState == 1) {
+        if (sensorState == 0 && lastBrakeState == 1) {
             delay(100);
-             Serial.println("left breakrun");
+             Serial.println("left brakerun");
              station_OC = true;
              brakeRun_OC = false;
              analogWrite(brake_run_motor, 0);
     
           }
-      lastBreakState = sensorState;
+      lastBrakeState = sensorState;
 }
 
 void ISRLift() // leaving lift
