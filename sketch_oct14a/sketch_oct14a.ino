@@ -46,8 +46,7 @@
   int liftSpeed = 20; //liftMotor
   int brakeSpeed = 20;
 
-  int maintenanceSpeedForward = 5;
-  int maintenanceSpeedBackward = -5;
+  int maintenanceSpeed = 5;
   
   int time = -1;
   bool run = true;
@@ -263,23 +262,40 @@ void showMode()
 void maintenanceMode()
 {
 
+
+
+
   if (digitalRead(switchStationForward) == HIGH ){
-    analogWrite(station_motor, maintenanceSpeedForward);
+    digitalWrite(stationHIGH, HIGH); //sets direction of station motor
+    digitalWrite(stationLOW, LOW);
+    analogWrite(station_motor, maintenanceSpeed);
   }
   else if  (digitalRead(switchStationBackward) == HIGH){
-    analogWrite(station_motor, maintenanceSpeedBackward);
+    digitalWrite(stationHIGH, LOW); //sets direction of station motor
+    digitalWrite(stationLOW, HIGH);
+    analogWrite(station_motor, maintenanceSpeed);
   }
   if (digitalRead(switchBrakeForward) == HIGH ){
-    analogWrite(brake_run_motor, maintenanceSpeedForward);
+    
+    digitalWrite(brakeHIGH, HIGH); //sets direction of station motor
+    digitalWrite(brakeLOW, LOW);
+    analogWrite(brake_run_motor, maintenanceSpeed);
   }
   else if  (digitalRead(switchBrakeBackward) == HIGH){
-    analogWrite(brake_run_motor, maintenanceSpeedBackward);
+    
+    digitalWrite(brakeHIGH, LOW); //sets direction of station motor
+    digitalWrite(brakeLOW, HIGH);
+    analogWrite(brake_run_motor, maintenanceSpeed);
   }
   if (digitalRead(switchLiftForward) == HIGH ){
-    analogWrite(lift_motor, maintenanceSpeedForward);
+    digitalWrite(liftHIGH, HIGH); //sets direction of station motor
+    digitalWrite(liftLOW, LOW);
+    analogWrite(lift_motor, maintenanceSpeed);
   }
   else if  (digitalRead(switchLiftBackward) == HIGH){
-    analogWrite(lift_motor, maintenanceSpeedBackward);
+    digitalWrite(liftHIGH, LOW); //sets direction of station motor
+    digitalWrite(liftLOW, HIGH);
+    analogWrite(lift_motor, maintenanceSpeed);
   }
 }
 
