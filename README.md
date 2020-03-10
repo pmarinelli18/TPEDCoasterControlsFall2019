@@ -11,12 +11,16 @@ and built from scratch.
 -Completed-Test Sensors with one train<br />
 -Completed-Develop prgram to handle multiple trains<br />
 -Completed-Test Sensors with multiple trains<br />
--In Progress-Write the software to run motors<br />
+-Completed-Write the software to run motors<br />
+-Completed-write software for different modes<br />
 -In Progress-Write the software to switch modes<br />
--Develop design for control box<br />
--write software for different modes<br />
+-In Progress-Add more sensors to add safety redundency <br />
+-In Progress-Develop design for control box<br />
+-Buy buttons<br />
 -Test the system to ensure everything works<br />
 -Create a separate program that will operate show equipment (LEDs, Sounds etc)<br />
+-Make TPED Website<br />
+-Make TPED App<br />
 
 <h3>Different Modes</h3>
 -Display Mode- Will continue to run for a given amount of time with no action needed<br />
