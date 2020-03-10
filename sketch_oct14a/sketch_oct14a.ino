@@ -16,10 +16,11 @@
   int brakeLOW = 15;
 
   int buttonPin = 12;
-
+  int keyPin = 41;
+  
   int switchShow = 33;
   int switchMaintenance = 34;
-  int autoLED = 36;
+  int dispatchLED = 36;
    int showLED = 35;
   int maintenanceLED = 37;
 
@@ -50,6 +51,15 @@
   
   int time = -1;
   bool run = true;
+  
+  enum mode {
+      maintenance,
+      dispatch, 
+      show
+  };
+  
+  mode curMode = show;
+
 void setup() 
 {
   //sets up LEDs as temp for the motors
@@ -91,7 +101,7 @@ void setup()
   pinMode(switchLiftForward, INPUT);
   pinMode(switchLiftBackward, INPUT);
 
-  pinMode(autoLED, OUTPUT);
+  pinMode(dispatchLED, OUTPUT);
   pinMode(showLED, OUTPUT);
   pinMode(maintenanceLED, OUTPUT);
   
@@ -101,24 +111,48 @@ void setup()
 }
 
 void loop(){
-  digitalWrite(showLED, LOW);
-  digitalWrite(maintenanceLED, LOW);
-  digitalWrite(autoLED, LOW);
+  int keyValue = digitalRead(keyPin);
+  
   //Show mode
-  if (digitalRead(switchShow) == HIGH ){
-    showMode();
-    digitalWrite(showLED, HIGH);
+  
+  if (keyValue == 1){
+    curMode = show;
+    if (digitalRead(switchShow) == HIGH){
+      showMode();
+      digitalWrite(showLED, HIGH);
+      digitalWrite(maintenanceLED, LOW);
+      digitalWrite(dispatchLED, LOW);
   }
   //maintenance mode
-  else if  (digitalRead(switchMaintenance) == HIGH){
-    maintenanceMode();
-    digitalWrite(maintenanceLED, HIGH);  
+    else if  (digitalRead(switchMaintenance) == HIGH){
+      curMode = maintenance;
+      maintenanceMode();
+      digitalWrite(showLED, LOW);
+      digitalWrite(maintenanceLED, HIGH);
+      digitalWrite(dispatchLED, LOW); 
   }
   //Auto mode
   else {
-    autoMode();
-    digitalWrite(autoLED, HIGH);
-   
+    curMode = dispatch;
+    dispatchMode();
+    digitalWrite(showLED, LOW);
+    digitalWrite(maintenanceLED, LOW);
+    digitalWrite(dispatchLED, HIGH);
+  }
+  }
+  else {
+    if (curMode == show) {
+        showMode();
+        digitalWrite(showLED, HIGH);
+        digitalWrite(maintenanceLED, LOW);
+        digitalWrite(dispatchLED, LOW);
+    }
+    else {
+      dispatchMode();
+      digitalWrite(showLED, LOW);
+      digitalWrite(maintenanceLED, LOW);
+      digitalWrite(dispatchLED, HIGH);
+    }
   }
   
 }
@@ -126,8 +160,9 @@ void loop(){
 
 
 //Will only allow the next coaster to go when an input is given
-void autoMode()
+void dispatchMode()
 {
+  Serial.println("dispatch Mode");
   digitalWrite(stationHIGH, HIGH); //sets direction of station motor
   digitalWrite(stationLOW, LOW);
 
@@ -189,6 +224,8 @@ void autoMode()
 //Will continue to run for a given amount of time with no action needed
 void showMode()
 {
+    Serial.println("Auto Mode");
+
   digitalWrite(stationHIGH, HIGH); //sets direction of station motor
   digitalWrite(stationLOW, LOW);
 
@@ -262,6 +299,7 @@ void showMode()
 void maintenanceMode()
 {
 
+  Serial.println("Maintenance Mode");
 
 
 
