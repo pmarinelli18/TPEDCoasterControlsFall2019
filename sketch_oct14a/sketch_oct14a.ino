@@ -161,7 +161,7 @@ void loop(){
 }
 
 void ISRStation(){ // station
-      int sensorState = digitalRead(StationPin); //FOR REAL APPLICATION add 'not' in front of read
+      int sensorState = not digitalRead(StationPin);
         if (sensorState == 1 && lastStationState == 0) {
              delay(100);
              Serial.println("entering Station");
@@ -181,7 +181,7 @@ void ISRStation(){ // station
 
 void ISRPreBrake() //entering brakerun
 {
-      int sensorState = digitalRead(preBrakePin); //FOR REAL APPLICATION add 'not' in front of read
+      int sensorState = not digitalRead(preBrakePin);
         if (sensorState == 1 && lastPrebrakeState == 0) {
             delay(100);
             Serial.println("entering pre-brake-run");
@@ -198,7 +198,7 @@ void ISRPreBrake() //entering brakerun
 
 void ISRBrake() //leaving brakerun
 {
-      int sensorState = digitalRead(brakePin); //FOR REAL APPLICATION add 'not' in front of read
+      int sensorState = not digitalRead(brakePin);
         if (sensorState == 1 && lastBrakeState == 0) {
             delay(100);
             Serial.println("at Brakerun");
@@ -219,7 +219,7 @@ void ISRBrake() //leaving brakerun
 
 void ISRLift() // leaving lift
 {
-      int sensorState = digitalRead(liftPin); //FOR REAL APPLICATION add 'not' in front of read
+      int sensorState = not digitalRead(liftPin);
         if (sensorState == 1 && lastLiftState == 0) {
             delay(100);
               Serial.println("entering top of Lift");
@@ -262,9 +262,9 @@ void dispatchMode()
   ISRStation();
   //Serial.println(layout_OC);
 
-  int StationSensor = digitalRead(StationPin); //FOR REAL APPLICATION add 'not' in front of read
-  int liftSensor = digitalRead(liftPin); //FOR REAL APPLICATION add 'not' in front of read
-  int brakeSensor = digitalRead(brakePin); //FOR REAL APPLICATION add 'not' in front of read
+  int StationSensor = not digitalRead(StationPin);
+  int liftSensor = not digitalRead(liftPin);
+  int brakeSensor = not digitalRead(brakePin);
 
   if((StationSensor == HIGH) && (liftOC == 0) && (dispatchButton == 1)) {
        Serial.println("button pressed here");
@@ -338,9 +338,9 @@ void showMode()
   ISRPreBrake();
   ISRStation();
 
-  int StationSensor = digitalRead(StationPin); //FOR REAL APPLICATION add 'not' before read 
-  int liftSensor = digitalRead(liftPin);//FOR REAL APPLICATION add 'not' before read 
-  int brakeSensor = digitalRead(brakePin);//FOR REAL APPLICATION add 'not' before read 
+  int StationSensor = not digitalRead(StationPin); 
+  int liftSensor = not digitalRead(liftPin);
+  int brakeSensor = not digitalRead(brakePin); 
 //Serial.println("Printing");
 
   if((StationSensor == HIGH) && liftOC == 0 && run) {
@@ -417,9 +417,9 @@ void maintenanceMode()
 
 //Config initial occupy values based on sensor input
 void scanTrackForInitialValues(){
-  int stationSensor = digitalRead(StationPin); //FOR REAL APPLICATION add 'not' in front of read
-  int liftSensor = digitalRead(liftPin); //FOR REAL APPLICATION add 'not' in front of read
-  int brakeSensor = digitalRead(brakePin); //FOR REAL APPLICATION add 'not' in front of read
+  int stationSensor = not digitalRead(StationPin);
+  int liftSensor = not digitalRead(liftPin);
+  int brakeSensor = not digitalRead(brakePin);
 
   if (stationSensor == HIGH){
     stationOC = true;
