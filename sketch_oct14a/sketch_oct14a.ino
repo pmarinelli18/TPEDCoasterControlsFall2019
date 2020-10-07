@@ -14,6 +14,7 @@
   int brake_run_motor = 5;
   int brakeHIGH = 1;
   int brakeLOW = 1;
+  int eStopTripLED = 6;
 
   int buttonPin = 11;
   int keyPin = 10;
@@ -23,7 +24,7 @@
   int dispatchLED = 1;
   int showLED = 1;
   int maintenanceLED = 1;
-
+  
   int switchStationForward =   1; //NEED TO add correct pins
   int switchStationBackward =  1;
 
@@ -42,7 +43,9 @@
   int lastLiftState = 0;
   int lastPrebrakeState = 0;
   int lastBrakeState = 0;
-  int dispatchButton = 0;
+  //int dispatchButton = 0;
+  int eStopPin = 11;
+  int tripEStopButton = 8;
 
  int stationSpeed = 1;
   int liftSpeed = 1; //liftMotor
@@ -56,7 +59,8 @@
   enum mode {
       maintenance,
       dispatch, 
-      show
+      show,
+      eStop
   };
   
   mode curMode = show;
@@ -74,11 +78,13 @@ void setup()
   pinMode(preBrakePin, INPUT);
   pinMode(brakePin, INPUT);
   pinMode(buttonPin, INPUT);
-
+  pinMode(eStopTripLED, OUTPUT);
+  pinMode(tripEStopButton, INPUT);
+  
   pinMode(7, OUTPUT);  //stationOC led  
-  pinMode(8, OUTPUT);  //layoutOC led        
+  //pinMode(8, OUTPUT);  //layoutOC led        
   pinMode(9, OUTPUT);  //brakeRunOC led   
-   pinMode(3, OUTPUT);  // led        
+  pinMode(3, OUTPUT);  // led        
 
 
   pinMode(station_motor, OUTPUT);         
@@ -116,9 +122,17 @@ void setup()
 void loop(){
   int keyValue = digitalRead(keyPin);
   
-  //Show mode
   
-  if (keyValue == 1){
+  if (digitalRead(tripEStopButton) == HIGH){
+    Serial.println("Estop button pressed!");
+    activateEStop();
+  }
+  
+  if (curMode == eStop) {
+  eStopMode();
+  }
+  //Show mode
+  else if (keyValue == 1){
     curMode = show;
     if (digitalRead(switchShow) == HIGH){
       showMode();
@@ -162,26 +176,28 @@ void loop(){
 
 void ISRStation(){ // station
       int sensorState = not digitalRead(StationPin);
-        if (sensorState == 1 && lastStationState == 0) {
+  if(curMode != eStop){
+
+      if (sensorState == 1 && lastStationState == 0) {
              delay(100);
              Serial.println("entering Station");
              analogWrite(station_motor, 0);
-            stationOC = true;
          } 
-        if (sensorState == 0 && lastStationState == 1) {
+      if (sensorState == 0 && lastStationState == 1) {
              delay(100);
             Serial.println("leaving Station");
             stationOC = false;
-            liftOC = true;
             analogWrite(station_motor, 0);
 
           }
       lastStationState = sensorState;
+  }
 }
 
 void ISRPreBrake() //entering brakerun
 {
       int sensorState = not digitalRead(preBrakePin);
+  if(curMode != eStop){
         if (sensorState == 1 && lastPrebrakeState == 0) {
             delay(100);
             Serial.println("entering pre-brake-run");
@@ -194,17 +210,16 @@ void ISRPreBrake() //entering brakerun
             layoutOC =false;
           }
       lastPrebrakeState = sensorState;
+  }
 }
 
 void ISRBrake() //leaving brakerun
 {
       int sensorState = not digitalRead(brakePin);
+    if(curMode != eStop){
         if (sensorState == 1 && lastBrakeState == 0) {
             delay(100);
             Serial.println("at Brakerun");
-           // station_OC = false;
-            brakeRunOC = true; //sets up initial state
-
          } 
         if (sensorState == 0 && lastBrakeState == 1) {
             delay(100);
@@ -215,31 +230,52 @@ void ISRBrake() //leaving brakerun
     
           }
       lastBrakeState = sensorState;
+    }
 }
 
 void ISRLift() // leaving lift
 {
       int sensorState = not digitalRead(liftPin);
-        if (sensorState == 1 && lastLiftState == 0) {
-            delay(100);
-              Serial.println("entering top of Lift");
-            } 
-        if (sensorState == 0 && lastLiftState == 1) {
-            delay(100);
-            liftOC = false;
-            layoutOC = true;
-            Serial.println("leaving lift hill");
-            analogWrite(lift_motor, 0);
-          }
+      if(curMode != eStop){
+            if (sensorState == 1 && lastLiftState == 0) {
+                delay(100);
+                  Serial.println("entering top of Lift");
+                } 
+            if (sensorState == 0 && lastLiftState == 1) {
+                delay(100);
+                liftOC = false;
+                layoutOC = true;
+                Serial.println("leaving lift hill");
+                analogWrite(lift_motor, 0);
+              }
       lastLiftState = sensorState;
+      }
 }
 
+void eStopMode(){
+  Serial.println("estopped");
 
+  if (digitalRead(keyPin) == HIGH && digitalRead(eStopPin) == HIGH ){
+    Serial.println("button pressed!");
+    digitalWrite(eStopTripLED,0);
+    curMode = show;
+    scanTrackForInitialValues();
+  }
+}
+
+void activateEStop(){
+    Serial.println("GOING INTO ESTOP");
+  digitalWrite(station_motor,0);
+    digitalWrite(lift_motor,0);
+    digitalWrite(brake_run_motor,0);
+    digitalWrite(eStopTripLED,1);
+    curMode = eStop;
+}
 
 //Will only allow the next coaster to go when an input is given
 void dispatchMode()
 {
-//  Serial.println("dispatch Mode");
+  //Serial.println("dispatch Mode");
   digitalWrite(stationHIGH, HIGH); //sets direction of station motor
   digitalWrite(stationLOW, LOW);
 
@@ -249,10 +285,10 @@ void dispatchMode()
   digitalWrite(brakeHIGH, HIGH); //sets direction of station motor
   digitalWrite(brakeLOW, LOW);
 
-  dispatchButton = digitalRead(buttonPin);
+  int dispatchButton = digitalRead(buttonPin);
   
     digitalWrite(7, stationOC); //print out layout OC to LED
-    digitalWrite(8, layoutOC); //layout_OC
+    //digitalWrite(8, layoutOC); //layout_OC
     digitalWrite(9, brakeRunOC); 
     digitalWrite(3, liftOC);
   
@@ -265,15 +301,23 @@ void dispatchMode()
   int StationSensor = not digitalRead(StationPin);
   int liftSensor = not digitalRead(liftPin);
   int brakeSensor = not digitalRead(brakePin);
+  int preBrakeSensor = not digitalRead(preBrakePin);
 
-  if((StationSensor == HIGH) && (liftOC == 0) && (dispatchButton == 1)) {
+
+  if(stationOC == false && StationSensor == HIGH){ //if station sensor is triggered, lift not occupied, and run is true but station is not activated estop wil activate
+      activateEStop();
+  }
+  else if((StationSensor == HIGH) && (liftOC == 0) && (dispatchButton == 1)) {
        Serial.println("button pressed here");
        digitalWrite(station_motor, stationSpeed); //FOR REAL APPLICATION use analogWrite()
        digitalWrite(lift_motor, liftSpeed); //FOR REAL APPLICATION use analogWrite()
-   // }
+       liftOC = true;
   }
   if (liftSensor == HIGH) {
-    if (brakeRunOC == true || layoutOC == true) {
+    if(liftOC == false) { //If lift sensor is triggered but lift is not activated estop will activate
+      activateEStop();
+    }
+    else if (brakeRunOC == true || layoutOC == true) {
       digitalWrite(lift_motor, 0); //FOR REAL APPLICATION use analogWrite()
     }
     else {
@@ -281,8 +325,12 @@ void dispatchMode()
     }
   }  
   
-  if(brakeSensor == HIGH) {   
-    if(stationOC == false) {
+  if(brakeSensor == HIGH) { 
+    if(brakeRunOC == false) {  //If the brake sensor is triggered when brake is not occupied estop will trigger
+      Serial.println("break run not occupied");
+      activateEStop();
+    }
+    else if(stationOC == false) {
        digitalWrite(station_motor, stationSpeed); //FOR REAL APPLICATION use analogWrite()
        digitalWrite(brake_run_motor, brakeSpeed);//FOR REAL APPLICATION use analogWrite()
       //start brake motor
@@ -291,7 +339,9 @@ void dispatchMode()
       digitalWrite(brake_run_motor, 0); //FOR REAL APPLICATION use analogWrite()
     }
   }
-
+  if(preBrakeSensor == HIGH && layoutOC == false) {
+        activateEStop();
+  }
 }
 
 
@@ -313,7 +363,7 @@ void showMode()
 
 
   //if the the button pin is pressed the trains will continue to run for 1 minute
-  dispatchButton = digitalRead(buttonPin); 
+  int dispatchButton = digitalRead(buttonPin); 
   if(dispatchButton ==1) 
   {
     time = millis(); //when pressed the time is set to the current time
@@ -328,7 +378,7 @@ void showMode()
   }
   
     digitalWrite(7, stationOC); //print out layout OC to LED
-    digitalWrite(8, layoutOC); //layout_OC
+    //digitalWrite(8, layoutOC); //layout_OC
     digitalWrite(9, brakeRunOC); 
     digitalWrite(3, liftOC);
 
@@ -337,21 +387,31 @@ void showMode()
   ISRBrake();
   ISRPreBrake();
   ISRStation();
+  
+  
 
   int StationSensor = not digitalRead(StationPin); 
   int liftSensor = not digitalRead(liftPin);
   int brakeSensor = not digitalRead(brakePin); 
+  int preBrakeSensor = not digitalRead(preBrakePin);
+
 //Serial.println("Printing");
 
-  if((StationSensor == HIGH) && liftOC == 0 && run) {
+  if(stationOC == false && StationSensor == HIGH){ //if station sensor is triggered, lift not occupied, and run is true but station is not activated estop wil activate
+      activateEStop();
+  }
+  else if((StationSensor == HIGH) && liftOC == 0 && run) {
        Serial.println("dispatch triggered");
        digitalWrite(station_motor, stationSpeed); //FOR REAL APPLICATION use analogWrite()
        digitalWrite(lift_motor, liftSpeed); //FOR REAL APPLICATION use analogWrite()
-   // }
+       liftOC = true;
   }
 
   if (liftSensor == HIGH) {
-    if (brakeRunOC == true || layoutOC == true) {
+      if(liftOC ==false) { //If lift sensor is triggered but lift is not activated estop will activate
+      activateEStop();
+    }
+    else if (brakeRunOC == true || layoutOC == true) {
       digitalWrite(lift_motor, 0);//FOR REAL APPLICATION use analogWrite()
     }
     else {
@@ -359,8 +419,11 @@ void showMode()
     }
   }  
   
-  if(brakeSensor == HIGH) {   
-    if(stationOC == false) {
+  if (brakeSensor == HIGH) {   
+    if(brakeRunOC == false){ //If brake sensor is triggered but brake is not occupied eStop will activte
+      activateEStop();
+    }
+    else if(stationOC == false) {
        digitalWrite(station_motor, stationSpeed);//FOR REAL APPLICATION use analogWrite()
        digitalWrite(brake_run_motor, brakeSpeed);//FOR REAL APPLICATION use analogWrite()
       //start brake motor
@@ -369,7 +432,9 @@ void showMode()
       digitalWrite(brake_run_motor, 0);//FOR REAL APPLICATION use analogWrite()
     }
   }
-
+  if(preBrakeSensor == HIGH && layoutOC == false) {
+        activateEStop();
+  }
 }
 
 
@@ -420,7 +485,12 @@ void scanTrackForInitialValues(){
   int stationSensor = not digitalRead(StationPin);
   int liftSensor = not digitalRead(liftPin);
   int brakeSensor = not digitalRead(brakePin);
-
+  
+  stationOC = false;
+  brakeRunOC = false;
+  liftOC = false;
+  layoutOC = false;  
+  
   if (stationSensor == HIGH){
     stationOC = true;
     Serial.println("At station");
@@ -438,6 +508,6 @@ void scanTrackForInitialValues(){
 
   }
   digitalWrite(7, stationOC); //print out layout OC to LED
-  digitalWrite(8, layoutOC); //layout_OC
+  //digitalWrite(8, layoutOC); //layout_OC
   digitalWrite(9, brakeRunOC); 
 }
