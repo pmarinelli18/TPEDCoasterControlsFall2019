@@ -7,7 +7,7 @@ struct LCDController  {
 private:
     char* upperString = (char*) malloc(16*sizeof(char));
     char* lowerString = (char*) malloc(16*sizeof(char));
-    int liftTimeCycle = EEPROM.read(0);
+    int lifeTimeCycle = EEPROM.read(0);
     int hourlyDispatch = 0;
     int lastHour = 0;
 public:
@@ -15,7 +15,7 @@ public:
         upperString = initUpperString;
         lowerString = initLowerString;
     }
-    void updateUpperString(char newUpperString[16]) {
+  void updateUpperString(char newUpperString[16]) {
         if (strcmp(upperString, newUpperString) != 0) {
             upperString = newUpperString;
             Serial.print("Upper Line: ");//,upperString
@@ -30,9 +30,32 @@ public:
             //update LCD screen here
         }
     }
-    void updateDispatch() {
-        liftTimeCycle += 1;
-        EEPROM.write(0, liftTimeCycle);
+  
+    void setUpDispatchString() {
+      char LCDText[17] = "DPH:000 LTD:0000";
+      if (hourlyDispatch >= 100) {
+           LCDText[4] = int((hourlyDispatch/100))%10+'0';
+       }
+      if (hourlyDispatch >= 10) {
+           LCDText[5] = int((hourlyDispatch/10))%10+'0';
+       }
+       LCDText[6] = int((hourlyDispatch/1))%10+'0';
+
+      if (lifeTimeCycle >= 1000) {
+           LCDText[12] = int(lifeTimeCycle/1000)%10+'0';
+      }
+      if (lifeTimeCycle >= 100) {
+          LCDText[13] = int(lifeTimeCycle/100)%10+'0';
+      }
+      if (lifeTimeCycle >= 10) {
+           LCDText[14] = int(lifeTimeCycle/10)%10+'0';
+       }
+       LCDText[15] = int(lifeTimeCycle/1)%10+'0';
+       updateLowerString(LCDText);
+  }
+   void updateDispatch() {
+        lifeTimeCycle += 1;
+        EEPROM.write(0, lifeTimeCycle);
         if( (int)millis()-(lastHour + 3600000) >= 0) { //3000
             hourlyDispatch = 1;
             lastHour = millis();
@@ -40,8 +63,7 @@ public:
         else{
             hourlyDispatch += 1;
         }
-       Serial.println(hourlyDispatch);
-       Serial.println(liftTimeCycle);
+      setUpDispatchString();
     }
 };
 
@@ -179,7 +201,7 @@ void loop(){
     }
     //Show mode
     else if (keyValue == 1){
-        lcdControllerInstance.updateLowerString("");
+        lcdControllerInstance.setUpDispatchString();
         curMode = show;
         if (digitalRead(switchShow) == HIGH){
             showMode();
@@ -227,8 +249,8 @@ void loop(){
         else if (curMode == maintenance && digitalRead(switchMaintenance) == HIGH) {
             lcdControllerInstance.updateLowerString("Insert Key");
         }
-        else {
-            lcdControllerInstance.updateLowerString("");
+        else if (curMode != eStop) {
+            lcdControllerInstance.setUpDispatchString();
         }
     }
 }
@@ -594,4 +616,7 @@ void scanTrackForInitialValues(){
     digitalWrite(7, stationOC); //print out layout OC to LED
     //digitalWrite(8, layoutOC); //layout_OC
     digitalWrite(9, brakeRunOC);
+  
+    lcdControllerInstance.setUpDispatchString();
+
 }
