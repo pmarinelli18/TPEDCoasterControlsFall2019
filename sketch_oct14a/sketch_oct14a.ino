@@ -3,38 +3,48 @@
 
 #include "LCDController.h"
 
-int StationPin = A5;
+//Motors
 int station_motor = 2;
 int stationDirection = 1;
-
-int liftPin = A4;
-
 int lift_motor = 4;
 int liftDirection = 1;
-
-int preBrakePin = A2;
-int brakePin = A3;
 int brake_run_motor = 5;
 int brakeDirection = 1;
-int eStopTripLED = 6;
+int stationSpeed = 1;
+int liftSpeed = 1; //liftMotor
+int brakeSpeed = 1;
+int maintenanceSpeed = 5;
 
-int buttonPin = 11;
+//Sensors
+int stationSensorPin = A5;
+int liftSensorPin = A4;
+int preBrakeSensorPin = A2;
+int brakeSensorPin = A3;
+
+//Indicator LEDs
+int eStopLedPin = 6;
+int stationOCLedPin = 0;
+int liftOCLedPin = 0;
+int breakRunOCLedPin = 0;
+int layoutOCLedPin = 0;
+
+//Buttons
+int dispatchButtonPin = 11;
 int keyPin = 10;
+int eStopClearButtonPin = 9;
+int eStopButtonPin = 8;
 
+//Switches
 int switchShow = 13;
 int switchMaintenance = 12;
-int dispatchLED = 1;
-int showLED = 1;
-int maintenanceLED = 1;
-
 int switchStationForward = 1; //NEED TO add correct pins
 int switchStationBackward = 1;
-
 int switchBrakeForward = 1;
 int switchBrakeBackward = 1;
-
 int switchLiftForward = 1;
 int switchLiftBackward = 1;
+
+//Block occupiled bools
 // Initializes variables at what they should be at the beginning
 bool stationOC = false;
 bool liftOC = false;
@@ -45,16 +55,8 @@ int lastStationState = 0;
 int lastLiftState = 0;
 int lastPrebrakeState = 0;
 int lastBrakeState = 0;
-//int dispatchButton = 0;
-int eStopPin = 9;
-int tripEStopButton = 8;
 
-int stationSpeed = 1;
-int liftSpeed = 1; //liftMotor
-int brakeSpeed = 1;
-
-int maintenanceSpeed = 5;
-
+//Show mode vars
 int time = -1;
 bool run = true;
 
@@ -65,8 +67,8 @@ enum mode
   show,
   eStop
 };
-struct LCDController lcdControllerInstance;
 
+struct LCDController lcdControllerInstance;
 mode curMode = show;
 
 void setup()
@@ -74,26 +76,27 @@ void setup()
   Serial.begin(9600);
 
   //initlize lcd
-  lcdControllerInstance.lcdControllerInstance("Welcome", "");
+  lcdControllerInstance.initLCDController("Welcome", "");
 
   //sets up LEDs as temp for the motors
-  //]attachInterrupt(digitalPinToInterrupt(StationPin)/*station sensor*/, ISRStation, CHANGE);
-  //attachInterrupt(digitalPinToInterrupt(preBrakePin)/*preBrake sensor*/, ISRPreBrake, CHANGE);
-  //attachInterrupt(digitalPinToInterrupt(brakePin)/*brake sensor*/, ISRBrake, CHANGE);
-  //attachInterrupt(digitalPinToInterrupt(liftPin)/*lift sensor*/, ISRLift, CHANGE);
-  pinMode(StationPin, INPUT);
-  pinMode(liftPin, INPUT);
-  pinMode(preBrakePin, INPUT);
-  pinMode(brakePin, INPUT);
-  pinMode(buttonPin, INPUT);
-  pinMode(eStopPin, INPUT);
-  pinMode(eStopTripLED, OUTPUT);
-  pinMode(tripEStopButton, INPUT);
+  //]attachInterrupt(digitalPinToInterrupt(stationSensorPin)/*station sensor*/, ISRStation, CHANGE);
+  //attachInterrupt(digitalPinToInterrupt(preBrakeSensorPin)/*preBrake sensor*/, ISRPreBrake, CHANGE);
+  //attachInterrupt(digitalPinToInterrupt(brakeSensorPin)/*brake sensor*/, ISRBrake, CHANGE);
+  //attachInterrupt(digitalPinToInterrupt(liftSensorPin)/*lift sensor*/, ISRLift, CHANGE);
 
-  pinMode(7, OUTPUT); //stationOC led
-  //pinMode(8, OUTPUT);  //layoutOC led
-  //pinMode(9, OUTPUT);  //brakeRunOC led
-  pinMode(3, OUTPUT); // led
+  pinMode(stationSensorPin, INPUT);
+  pinMode(liftSensorPin, INPUT);
+  pinMode(preBrakeSensorPin, INPUT);
+  pinMode(brakeSensorPin, INPUT);
+  pinMode(dispatchButtonPin, INPUT);
+  pinMode(eStopClearButtonPin, INPUT);
+  pinMode(eStopLedPin, OUTPUT);
+  pinMode(eStopButtonPin, INPUT);
+
+  pinMode(stationOCLedPin, OUTPUT);  //stationOC led
+  pinMode(layoutOCLedPin, OUTPUT);   //layoutOC led
+  pinMode(breakRunOCLedPin, OUTPUT); //brakeRunOC led
+  pinMode(liftOCLedPin, OUTPUT);     // led
 
   pinMode(station_motor, OUTPUT);
   pinMode(lift_motor, OUTPUT);
@@ -117,17 +120,13 @@ void setup()
   pinMode(switchLiftForward, INPUT);
   pinMode(switchLiftBackward, INPUT);
 
-  pinMode(dispatchLED, OUTPUT);
-  pinMode(showLED, OUTPUT);
-  pinMode(maintenanceLED, OUTPUT);
-
   scanTrackForInitialValues();
 }
 void loop()
 {
   int keyValue = digitalRead(keyPin);
 
-  if (digitalRead(tripEStopButton) == HIGH)
+  if (digitalRead(eStopButtonPin) == HIGH)
   {
     activateEStop(0);
   }
@@ -144,27 +143,18 @@ void loop()
     if (digitalRead(switchShow) == HIGH)
     {
       showMode();
-      digitalWrite(showLED, HIGH);
-      digitalWrite(maintenanceLED, LOW);
-      digitalWrite(dispatchLED, LOW);
     }
     //maintenance mode
     else if (digitalRead(switchMaintenance) == HIGH)
     {
       curMode = maintenance;
       maintenanceMode();
-      digitalWrite(showLED, LOW);
-      digitalWrite(maintenanceLED, HIGH);
-      digitalWrite(dispatchLED, LOW);
     }
     //Dispatch mode
     else
     {
       curMode = dispatch;
       dispatchMode();
-      digitalWrite(showLED, LOW);
-      digitalWrite(maintenanceLED, LOW);
-      digitalWrite(dispatchLED, HIGH);
     }
   }
 
@@ -174,16 +164,10 @@ void loop()
     if (curMode == show)
     {
       showMode();
-      digitalWrite(showLED, HIGH);
-      digitalWrite(maintenanceLED, LOW);
-      digitalWrite(dispatchLED, LOW);
     }
     else
     {
       dispatchMode();
-      digitalWrite(showLED, LOW);
-      digitalWrite(maintenanceLED, LOW);
-      digitalWrite(dispatchLED, HIGH);
     }
 
     if (curMode == show && digitalRead(switchShow) != HIGH)
@@ -207,7 +191,7 @@ void loop()
 
 void ISRStation()
 { // station
-  int sensorState = not digitalRead(StationPin);
+  int sensorState = not digitalRead(stationSensorPin);
   if (curMode != eStop)
   {
 
@@ -230,7 +214,7 @@ void ISRStation()
 
 void ISRPreBrake() //entering brakerun
 {
-  int sensorState = not digitalRead(preBrakePin);
+  int sensorState = not digitalRead(preBrakeSensorPin);
   if (curMode != eStop)
   {
     if (sensorState == 1 && lastPrebrakeState == 0)
@@ -252,7 +236,7 @@ void ISRPreBrake() //entering brakerun
 
 void ISRBrake() //leaving brakerun
 {
-  int sensorState = not digitalRead(brakePin);
+  int sensorState = not digitalRead(brakeSensorPin);
   if (curMode != eStop)
   {
     if (sensorState == 1 && lastBrakeState == 0)
@@ -274,7 +258,7 @@ void ISRBrake() //leaving brakerun
 
 void ISRLift() // leaving lift
 {
-  int sensorState = not digitalRead(liftPin);
+  int sensorState = not digitalRead(liftSensorPin);
   if (curMode != eStop)
   {
     if (sensorState == 1 && lastLiftState == 0)
@@ -298,10 +282,10 @@ void eStopMode()
 {
   //Serial.println("estopped");
 
-  if (digitalRead(keyPin) == HIGH && digitalRead(eStopPin) == HIGH)
+  if (digitalRead(keyPin) == HIGH && digitalRead(eStopClearButtonPin) == HIGH)
   {
     //Serial.println("button pressed!");
-    digitalWrite(eStopTripLED, 0);
+    digitalWrite(eStopLedPin, 0);
     curMode = show;
     scanTrackForInitialValues();
   }
@@ -336,7 +320,7 @@ void activateEStop(int faultKey)
   digitalWrite(station_motor, 0);
   digitalWrite(lift_motor, 0);
   digitalWrite(brake_run_motor, 0);
-  digitalWrite(eStopTripLED, 1);
+  digitalWrite(eStopLedPin, 1);
   curMode = eStop;
 }
 
@@ -349,12 +333,12 @@ void dispatchMode()
   digitalWrite(liftDirection, HIGH);
   digitalWrite(brakeDirection, HIGH);
 
-  int dispatchButton = digitalRead(buttonPin);
+  int dispatchButton = digitalRead(dispatchButtonPin);
 
-  digitalWrite(7, stationOC); //print out layout OC to LED
-  //digitalWrite(8, layoutOC); //layout_OC
-  //digitalWrite(9, brakeRunOC);
-  digitalWrite(3, liftOC);
+  digitalWrite(stationOCLedPin, stationOC);
+  digitalWrite(layoutOCLedPin, layoutOC);
+  digitalWrite(breakRunOCLedPin, brakeRunOC);
+  digitalWrite(liftOCLedPin, liftOC);
 
   ISRLift();
   ISRBrake();
@@ -362,10 +346,10 @@ void dispatchMode()
   ISRStation();
   //Serial.println(layout_OC);
 
-  int StationSensor = not digitalRead(StationPin);
-  int liftSensor = not digitalRead(liftPin);
-  int brakeSensor = not digitalRead(brakePin);
-  int preBrakeSensor = not digitalRead(preBrakePin);
+  int StationSensor = not digitalRead(stationSensorPin);
+  int liftSensor = not digitalRead(liftSensorPin);
+  int brakeSensor = not digitalRead(brakeSensorPin);
+  int preBrakeSensor = not digitalRead(preBrakeSensorPin);
 
   if (stationOC == false && StationSensor == HIGH)
   { //Stn trig unexp -> staton triggered unexpectidly
@@ -373,7 +357,7 @@ void dispatchMode()
   }
   else if ((StationSensor == HIGH) && (liftOC == 0) && (dispatchButton == 1))
   {
-    while (digitalRead(buttonPin) == 1)
+    while (digitalRead(dispatchButtonPin) == 1)
       ;
 
     lcdControllerInstance.updateDispatch();
@@ -432,7 +416,7 @@ void showMode()
   digitalWrite(brakeDirection, HIGH);
 
   //if the the button pin is pressed the trains will continue to run for 1 minute
-  int dispatchButton = digitalRead(buttonPin);
+  int dispatchButton = digitalRead(dispatchButtonPin);
   if (dispatchButton == 1)
   {
     time = millis(); //when pressed the time is set to the current time
@@ -446,20 +430,20 @@ void showMode()
     run = false;
   }
 
-  digitalWrite(7, stationOC); //print out layout OC to LED
-  //digitalWrite(8, layoutOC); //layout_OC
-  //digitalWrite(9, brakeRunOC);
-  digitalWrite(3, liftOC);
+  digitalWrite(stationOCLedPin, stationOC);
+  digitalWrite(layoutOCLedPin, layoutOC);
+  digitalWrite(breakRunOCLedPin, brakeRunOC);
+  digitalWrite(liftOCLedPin, liftOC);
 
   ISRLift();
   ISRBrake();
   ISRPreBrake();
   ISRStation();
 
-  int StationSensor = not digitalRead(StationPin);
-  int liftSensor = not digitalRead(liftPin);
-  int brakeSensor = not digitalRead(brakePin);
-  int preBrakeSensor = not digitalRead(preBrakePin);
+  int StationSensor = not digitalRead(stationSensorPin);
+  int liftSensor = not digitalRead(liftSensorPin);
+  int brakeSensor = not digitalRead(brakeSensorPin);
+  int preBrakeSensor = not digitalRead(preBrakeSensorPin);
 
   //Serial.println("Printing");
 
@@ -558,9 +542,9 @@ void maintenanceMode()
 //Config initial occupy values based on sensor input
 void scanTrackForInitialValues()
 {
-  int stationSensor = not digitalRead(StationPin);
-  int liftSensor = not digitalRead(liftPin);
-  int brakeSensor = not digitalRead(brakePin);
+  int stationSensor = not digitalRead(stationSensorPin);
+  int liftSensor = not digitalRead(liftSensorPin);
+  int brakeSensor = not digitalRead(brakeSensorPin);
 
   stationOC = false;
   brakeRunOC = false;
@@ -584,9 +568,10 @@ void scanTrackForInitialValues()
     liftOC = true;
     Serial.println("At lift");
   }
-  digitalWrite(7, stationOC); //print out layout OC to LED
-  //digitalWrite(8, layoutOC); //layout_OC
-  //digitalWrite(9, brakeRunOC);
+  digitalWrite(stationOCLedPin, stationOC);
+  digitalWrite(layoutOCLedPin, layoutOC);
+  digitalWrite(breakRunOCLedPin, brakeRunOC);
+  digitalWrite(liftOCLedPin, liftOC);
 
   lcdControllerInstance.setUpDispatchString();
 }
