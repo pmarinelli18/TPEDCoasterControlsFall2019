@@ -81,7 +81,6 @@ struct LCDController  {
 
     String getNumberOfSpaces(String currentLine){
       String spaces = "";
-       Serial.print(16-currentLine.length());//,upperString
      for (int i = 0; i<16-currentLine.length(); i++){
         spaces += " ";  
      }
