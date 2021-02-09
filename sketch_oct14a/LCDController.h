@@ -1,3 +1,8 @@
+#include <LiquidCrystal_I2C.h>
+#include <Wire.h> 
+
+LiquidCrystal_I2C lcd(0x27,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+
 struct LCDController  {
   private:
     String upperString = "";
@@ -5,16 +10,27 @@ struct LCDController  {
     int lifeTimeCycle = EEPROM.read(0);
     int hourlyDispatch = 0;
     int lastHour = 0;
+
+    
   public:
     void initLCDController(String initUpperString, String initLowerString) {
       upperString = initUpperString;
       lowerString = initLowerString;
+      lcd.init();                      // initialize the lcd 
+      // Print a message to the LCD.
+      lcd.backlight();
+      lcd.setCursor(0,0);
+      lcd.print(upperString);
+      lcd.setCursor(0,1);
+      lcd.print(lowerString);
     }
     void updateUpperString(String newUpperString) {
       if (upperString.compareTo(newUpperString) != 0) {
         upperString = newUpperString;
         Serial.print("Upper Line: ");//,upperString
         Serial.println(newUpperString);
+        lcd.setCursor(0,0);
+        lcd.print(upperString + getNumberOfSpaces(upperString));
       }
     }
     void updateLowerString(String newLowerString) {
@@ -23,6 +39,8 @@ struct LCDController  {
         Serial.print("Lower Line: "); //, lowerString
         Serial.println(newLowerString);
         //update LCD screen here
+        lcd.setCursor(0,1);
+        lcd.print(lowerString + getNumberOfSpaces(lowerString));
       }
     }
 
@@ -59,5 +77,14 @@ struct LCDController  {
         hourlyDispatch += 1;
       }
       setUpDispatchString();
+    }
+
+    String getNumberOfSpaces(String currentLine){
+      String spaces = "";
+       Serial.print(16-currentLine.length());//,upperString
+     for (int i = 0; i<16-currentLine.length(); i++){
+        spaces += " ";  
+     }
+     return spaces;
     }
 };

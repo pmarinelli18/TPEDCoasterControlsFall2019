@@ -108,8 +108,8 @@ void setup()
   analogWrite(lift_motor, 0);
   analogWrite(lift_motor, 0);
 
-  pinMode(switchShow, INPUT);
-  pinMode(switchMaintenance, INPUT);
+  pinMode(switchShow, INPUT_PULLUP);
+  pinMode(switchMaintenance, INPUT_PULLUP);
 
   pinMode(switchStationForward, INPUT);
   pinMode(switchStationBackward, INPUT);
@@ -120,13 +120,15 @@ void setup()
   pinMode(switchLiftForward, INPUT);
   pinMode(switchLiftBackward, INPUT);
 
+  pinMode(keyPin, INPUT_PULLUP);
+
   scanTrackForInitialValues();
 }
 void loop()
 {
   int keyValue = digitalRead(keyPin);
 
-  if (digitalRead(eStopButtonPin) == HIGH)
+  if (digitalRead(eStopButtonPin) == LOW)
   {
     activateEStop(0);
   }
@@ -140,12 +142,12 @@ void loop()
   {
     lcdControllerInstance.setUpDispatchString();
     curMode = show;
-    if (digitalRead(switchShow) == HIGH)
+    if (digitalRead(switchShow) == LOW)
     {
       showMode();
     }
     //maintenance mode
-    else if (digitalRead(switchMaintenance) == HIGH)
+    else if (digitalRead(switchMaintenance) == LOW)
     {
       curMode = maintenance;
       maintenanceMode();
@@ -170,15 +172,15 @@ void loop()
       dispatchMode();
     }
 
-    if (curMode == show && digitalRead(switchShow) != HIGH)
+    if (curMode == show && digitalRead(switchShow) != LOW)
     {
       lcdControllerInstance.updateLowerString("Insert Key");
     }
-    else if (curMode == dispatch && (digitalRead(switchShow) == HIGH || digitalRead(switchMaintenance) == HIGH))
+    else if (curMode == dispatch && (digitalRead(switchShow) == LOW || digitalRead(switchMaintenance) == LOW))
     {
       lcdControllerInstance.updateLowerString("Insert Key");
     }
-    else if (curMode == maintenance && digitalRead(switchMaintenance) == HIGH)
+    else if (curMode == maintenance && digitalRead(switchMaintenance) == LOW)
     {
       lcdControllerInstance.updateLowerString("Insert Key");
     }
