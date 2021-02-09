@@ -2,14 +2,17 @@
 #include <EEPROM.h>
 
 #include "LCDController.h"
+#include "MotorController.h"
 
 //Motors
-int station_motor = 2;
-int stationDirection = 1;
-int lift_motor = 4;
-int liftDirection = 1;
-int brake_run_motor = 5;
-int brakeDirection = 1;
+//*** pin locations should be changed to where the wires end up being**
+struct MotorController station_motor;
+
+struct MotorController lift_motor;
+
+struct MotorController brake_motor;
+
+
 int stationSpeed = 1;
 int liftSpeed = 1; //liftMotor
 int brakeSpeed = 1;
@@ -77,7 +80,10 @@ void setup()
 
   //initlize lcd
   lcdControllerInstance.initLCDController("Welcome", "");
-
+  
+  station_motor.initMotor(2, 1);
+  lift_motor.initMotor(4, 1);
+  brake_motor.initMotor(5, 1);
   //sets up LEDs as temp for the motors
   //]attachInterrupt(digitalPinToInterrupt(stationSensorPin)/*station sensor*/, ISRStation, CHANGE);
   //attachInterrupt(digitalPinToInterrupt(preBrakeSensorPin)/*preBrake sensor*/, ISRPreBrake, CHANGE);
@@ -98,15 +104,7 @@ void setup()
   pinMode(breakRunOCLedPin, OUTPUT); //brakeRunOC led
   pinMode(liftOCLedPin, OUTPUT);     // led
 
-  pinMode(station_motor, OUTPUT);
-  pinMode(lift_motor, OUTPUT);
-  pinMode(brake_run_motor, OUTPUT);
-
   // digitalWrite(station_motor, LOW);
-  analogWrite(station_motor, 0);
-
-  analogWrite(lift_motor, 0);
-  analogWrite(lift_motor, 0);
 
   pinMode(switchShow, INPUT_PULLUP);
   pinMode(switchMaintenance, INPUT_PULLUP);
@@ -201,14 +199,14 @@ void ISRStation()
     {
       delay(100);
       Serial.println("entering Station");
-      analogWrite(station_motor, 0);
+      station_motor.updateMotorSpeed(0);
     }
     if (sensorState == 0 && lastStationState == 1)
     {
       delay(100);
       Serial.println("leaving Station");
       stationOC = false;
-      analogWrite(station_motor, 0);
+      station_motor.updateMotorSpeed(0);
     }
     lastStationState = sensorState;
   }
@@ -223,7 +221,8 @@ void ISRPreBrake() //entering brakerun
     {
       delay(100);
       Serial.println("entering pre-brake-run");
-      digitalWrite(brake_run_motor, brakeSpeed); //FOR REAL APPLICATION use analogWrite()
+      
+      brake_motor.updateMotorSpeed(brakeSpeed);
       brakeRunOC = true;
     }
     if (sensorState == 0 && lastPrebrakeState == 1)
@@ -252,7 +251,7 @@ void ISRBrake() //leaving brakerun
       Serial.println("left brakerun");
       stationOC = true;
       brakeRunOC = false;
-      digitalWrite(brake_run_motor, 0); //FOR REAL APPLICATION use analogWrite()
+      brake_motor.updateMotorSpeed(0);
     }
     lastBrakeState = sensorState;
   }
@@ -274,7 +273,7 @@ void ISRLift() // leaving lift
       liftOC = false;
       layoutOC = true;
       Serial.println("leaving lift hill");
-      analogWrite(lift_motor, 0);
+      lift_motor.updateMotorSpeed(0);
     }
     lastLiftState = sensorState;
   }
@@ -319,9 +318,9 @@ void activateEStop(int faultKey)
   }
 
   // Serial.println("GOING INTO ESTOP");
-  digitalWrite(station_motor, 0);
-  digitalWrite(lift_motor, 0);
-  digitalWrite(brake_run_motor, 0);
+  station_motor.updateMotorSpeed(0);
+  lift_motor.updateMotorSpeed(0);
+  brake_motor.updateMotorSpeed(0);
   digitalWrite(eStopLedPin, 1);
   curMode = eStop;
 }
@@ -331,9 +330,9 @@ void dispatchMode()
 {
   lcdControllerInstance.updateUpperString("Dispatch Mode");
 
-  digitalWrite(stationDirection, HIGH);
-  digitalWrite(liftDirection, HIGH);
-  digitalWrite(brakeDirection, HIGH);
+  station_motor.updateDirection(1); //HIGH
+  lift_motor.updateDirection(1);
+  brake_motor.updateDirection(1);
 
   int dispatchButton = digitalRead(dispatchButtonPin);
 
@@ -363,9 +362,9 @@ void dispatchMode()
       ;
 
     lcdControllerInstance.updateDispatch();
-    Serial.println("button pressed here");
-    digitalWrite(station_motor, stationSpeed); //FOR REAL APPLICATION use analogWrite()
-    digitalWrite(lift_motor, liftSpeed);       //FOR REAL APPLICATION use analogWrite()
+    Serial.println("button pressed here");        //FOR REAL APPLICATION use analogWrite()
+    station_motor.updateMotorSpeed(stationSpeed); //FOR REAL APPLICATION use analogWrite()
+    lift_motor.updateMotorSpeed(liftSpeed);
     liftOC = true;
   }
   if (liftSensor == HIGH)
@@ -376,11 +375,12 @@ void dispatchMode()
     }
     else if (brakeRunOC == true || layoutOC == true)
     {
-      digitalWrite(lift_motor, 0); //FOR REAL APPLICATION use analogWrite()
+
+      lift_motor.updateMotorSpeed(0);
     }
     else
     {
-      digitalWrite(lift_motor, liftSpeed); //FOR REAL APPLICATION use analogWrite()
+      lift_motor.updateMotorSpeed(liftSpeed);
     }
   }
 
@@ -392,14 +392,13 @@ void dispatchMode()
       activateEStop(3); // brk trig unex
     }
     else if (stationOC == false)
-    {
-      digitalWrite(station_motor, stationSpeed); //FOR REAL APPLICATION use analogWrite()
-      digitalWrite(brake_run_motor, brakeSpeed); //FOR REAL APPLICATION use analogWrite()
-                                                 //start brake motor
+    { //FOR REAL APPLICATION use analogWrite()
+      station_motor.updateMotorSpeed(stationSpeed);
+      brake_motor.updateMotorSpeed(brakeSpeed);
     }
     else
     {
-      digitalWrite(brake_run_motor, 0); //FOR REAL APPLICATION use analogWrite()
+      brake_motor.updateMotorSpeed(0);
     }
   }
   if (preBrakeSensor == HIGH && layoutOC == false)
@@ -412,10 +411,9 @@ void dispatchMode()
 void showMode()
 {
   lcdControllerInstance.updateUpperString("Show Mode");
-
-  digitalWrite(stationDirection, HIGH);
-  digitalWrite(liftDirection, HIGH);
-  digitalWrite(brakeDirection, HIGH);
+  station_motor.updateDirection(1);
+  lift_motor.updateDirection(1);
+  brake_motor.updateDirection(1);
 
   //if the the button pin is pressed the trains will continue to run for 1 minute
   int dispatchButton = digitalRead(dispatchButtonPin);
@@ -456,8 +454,8 @@ void showMode()
   else if ((StationSensor == HIGH) && liftOC == 0 && run)
   {
     Serial.println("dispatch triggered");
-    digitalWrite(station_motor, stationSpeed); //FOR REAL APPLICATION use analogWrite()
-    digitalWrite(lift_motor, liftSpeed);       //FOR REAL APPLICATION use analogWrite()
+    station_motor.updateMotorSpeed(stationSpeed);
+    lift_motor.updateMotorSpeed(liftSpeed);
     liftOC = true;
   }
 
@@ -469,11 +467,11 @@ void showMode()
     }
     else if (brakeRunOC == true || layoutOC == true)
     {
-      digitalWrite(lift_motor, 0); //FOR REAL APPLICATION use analogWrite()
+      lift_motor.updateMotorSpeed(0);
     }
     else
     {
-      digitalWrite(lift_motor, liftSpeed); //FOR REAL APPLICATION use analogWrite()
+      lift_motor.updateMotorSpeed(liftSpeed);
     }
   }
 
@@ -485,13 +483,13 @@ void showMode()
     }
     else if (stationOC == false)
     {
-      digitalWrite(station_motor, stationSpeed); //FOR REAL APPLICATION use analogWrite()
-      digitalWrite(brake_run_motor, brakeSpeed); //FOR REAL APPLICATION use analogWrite()
-                                                 //start brake motor
+
+      station_motor.updateMotorSpeed(stationSpeed);
+      station_motor.updateMotorSpeed(brakeSpeed);
     }
     else
     {
-      digitalWrite(brake_run_motor, 0); //FOR REAL APPLICATION use analogWrite()
+      brake_motor.updateMotorSpeed(0);
     }
   }
   if (preBrakeSensor == HIGH && layoutOC == false)
@@ -508,36 +506,34 @@ void maintenanceMode()
 
   if (digitalRead(switchStationForward) == HIGH)
   {
-    digitalWrite(stationDirection, HIGH);
-    analogWrite(station_motor, maintenanceSpeed);
+    station_motor.updateMotorSpeed(maintenanceSpeed);
+    station_motor.updateDirection(1);
   }
   else if (digitalRead(switchStationBackward) == HIGH)
   {
-    digitalWrite(stationDirection, LOW);
-    analogWrite(station_motor, maintenanceSpeed);
+    station_motor.updateMotorSpeed(maintenanceSpeed);
+    station_motor.updateDirection(0);
   }
   if (digitalRead(switchBrakeForward) == HIGH)
   {
 
-    digitalWrite(brakeDirection, HIGH);
-    analogWrite(brake_run_motor, maintenanceSpeed);
+    brake_motor.updateMotorSpeed(maintenanceSpeed);
+    brake_motor.updateDirection(1);
   }
   else if (digitalRead(switchBrakeBackward) == HIGH)
   {
-
-    digitalWrite(brakeDirection, LOW);
-    analogWrite(brake_run_motor, maintenanceSpeed);
+    brake_motor.updateMotorSpeed(maintenanceSpeed);
+    brake_motor.updateDirection(0);
   }
   if (digitalRead(switchLiftForward) == HIGH)
   {
-
-    digitalWrite(liftDirection, HIGH); //sets direction of station motor
-    analogWrite(lift_motor, maintenanceSpeed);
+    lift_motor.updateMotorSpeed(maintenanceSpeed);
+    lift_motor.updateDirection(1);
   }
   else if (digitalRead(switchLiftBackward) == HIGH)
   {
-    digitalWrite(liftDirection, LOW); //sets direction of station motor
-    analogWrite(lift_motor, maintenanceSpeed);
+    lift_motor.updateMotorSpeed(maintenanceSpeed);
+    lift_motor.updateDirection(0);
   }
 }
 

@@ -1,4 +1,4 @@
-struct Motor
+struct MotorController
 {
 private:
     int speed;        // (1-255)  //The speed of the motors
@@ -28,7 +28,7 @@ public:
         speed = 0;
         analogWrite(pinNumber, speed);
     }
-    void setDirection(bool newDirection)
+    void updateDirection(bool newDirection)
     {
         if (newDirection == true)
         {
