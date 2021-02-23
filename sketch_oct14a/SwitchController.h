@@ -18,7 +18,6 @@ struct SwitchController  {
     }
 
     SwitchState getState() {
-      
       if (digitalRead(leftPin) == HIGH && digitalRead(rightPin) == LOW) {
         return left;
       } else if (digitalRead(rightPin) == HIGH && digitalRead(leftPin) == LOW) {
