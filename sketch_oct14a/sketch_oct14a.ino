@@ -52,7 +52,7 @@ int lastBrakeState = 0;
 
 //Show mode vars
 int time = -1;
-bool run = true;
+bool run = false;
 
 enum mode
 {
@@ -270,7 +270,9 @@ void ISRClearedPoint() // leaving lift
   int sensorState = not digitalRead(clearedPointSensorPin);
   if (curMode != eStop)
   {
-    if (!clearedPoint){
+    if (!clearedPoint && sensorState == 1){
+        Serial.println("Coaster has cleared the point");
+
       clearedPoint = true;
     }
   }
@@ -279,7 +281,9 @@ void ISRClearedPoint() // leaving lift
 void eStopMode()
 {
   //Serial.println("estopped");
-
+  station_motor.updateMotorSpeed(0);
+  lift_motor.updateMotorSpeed(0);
+  brake_motor.updateMotorSpeed(0);
   if (digitalRead(keyPin) == HIGH && digitalRead(eStopClearButtonPin) == HIGH)
   {
     //Serial.println("button pressed!");
@@ -318,8 +322,11 @@ void activateEStop(int faultKey)
   station_motor.updateMotorSpeed(0);
   lift_motor.updateMotorSpeed(0);
   brake_motor.updateMotorSpeed(0);
+  //Serial.println("Setting the speed to 0");
   digitalWrite(eStopLedPin, 1);
   curMode = eStop;
+  //Reset show mode
+  time = -1;
 }
 
 //Will only allow the next coaster to go when an input is given
@@ -395,6 +402,7 @@ void dispatchMode()
     { //FOR REAL APPLICATION use analogWrite()
       station_motor.updateMotorSpeed(stationSpeed);
       brake_motor.updateMotorSpeed(brakeSpeed);
+      //Serial.println("Setting the speed");
     }
     else
     {
@@ -416,12 +424,13 @@ void showMode()
   brake_motor.updateDirection(1);
 
   //if the the button pin is pressed the trains will continue to run for 1 minute
-  int dispatchButton = digitalRead(dispatchButtonPin);
+  int dispatchButton = not digitalRead(dispatchButtonPin);
   if (dispatchButton == 1)
   {
     time = millis(); //when pressed the time is set to the current time
   }
-  if (time != -1 && millis() < time + 5000) //60000
+  
+  if (time != -1 && millis() < time + 60000) //60000
   {
     run = true; //as long as the recorder time + a minute is greater than the current time the train will run
   }
@@ -448,10 +457,16 @@ void showMode()
 
   //Serial.println("Printing");
 
+    Serial.print(liftOC);
+  Serial.println(clearedPoint);
+
   if (stationOC == false && StationSensor == HIGH)
   { //if station sensor is triggered, lift not occupied, and run is true but station is not activated estop wil activate
     activateEStop(1);
   }
+  
+
+
   else if ((StationSensor == HIGH) && liftOC == 0 && run && clearedPoint)
   {
     Serial.println("dispatch triggered");
