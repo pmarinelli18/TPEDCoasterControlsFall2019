@@ -11,7 +11,6 @@ struct MotorController station_motor;
 struct MotorController lift_motor;
 struct MotorController brake_motor;
 
-
 int stationSpeed = 1;
 int liftSpeed = 1; //liftMotor
 int brakeSpeed = 1;
@@ -30,6 +29,7 @@ int stationOCLedPin = 0;
 int liftOCLedPin = 0;
 int breakRunOCLedPin = 0;
 int layoutOCLedPin = 0;
+int dispatchReadyLEDPin = 42;
 
 //Buttons
 int dispatchButtonPin = 11;
@@ -44,6 +44,8 @@ bool liftOC = false;
 bool layoutOC = false;
 bool clearedPoint = true;
 bool brakeRunOC = false;
+
+bool dispatchReady = false;
 
 int lastStationState = 0;
 int lastLiftState = 0;
@@ -77,7 +79,7 @@ void setup()
 
   //initlize lcd
   lcdControllerInstance.initLCDController("Welcome", "");
-  
+
   station_motor.initMotor(27, 1);
   lift_motor.initMotor(23, 1);
   brake_motor.initMotor(25, 1);
@@ -91,11 +93,12 @@ void setup()
   pinMode(liftSensorPin, INPUT_PULLUP);
   pinMode(preBrakeSensorPin, INPUT_PULLUP);
   pinMode(brakeSensorPin, INPUT_PULLUP);
-  
+
   pinMode(eStopClearButtonPin, INPUT_PULLUP);
   pinMode(eStopLedPin, OUTPUT);
   pinMode(eStopButtonPin, INPUT_PULLUP);
   pinMode(dispatchButtonPin, INPUT_PULLUP);
+  pinMode(dispatchReadyLEDPin, OUTPUT);
 
   pinMode(stationOCLedPin, OUTPUT);  //stationOC led
   pinMode(layoutOCLedPin, OUTPUT);   //layoutOC led
@@ -125,20 +128,21 @@ void loop()
   else if (keyValue == 1)
   {
     lcdControllerInstance.setUpDispatchString();
-    
-    switch (modeSwitch.getState()) {
-      case left:
-        curMode = maintenance;
-        maintenanceMode();
-        break;
-      case right:
-        curMode = show;
-        showMode();
-        break;
-      case center:
-        curMode = dispatch;
-        dispatchMode();
-        break;
+
+    switch (modeSwitch.getState())
+    {
+    case left:
+      curMode = maintenance;
+      maintenanceMode();
+      break;
+    case right:
+      curMode = show;
+      showMode();
+      break;
+    case center:
+      curMode = dispatch;
+      dispatchMode();
+      break;
     }
   }
 
@@ -206,7 +210,7 @@ void ISRPreBrake() //entering brakerun
     {
       delay(100);
       Serial.println("entering pre-brake-run");
-      
+
       brake_motor.updateMotorSpeed(brakeSpeed);
       brakeRunOC = true;
     }
@@ -270,8 +274,9 @@ void ISRClearedPoint() // leaving lift
   int sensorState = not digitalRead(clearedPointSensorPin);
   if (curMode != eStop)
   {
-    if (!clearedPoint && sensorState == 1){
-        Serial.println("Coaster has cleared the point");
+    if (!clearedPoint && sensorState == 1)
+    {
+      Serial.println("Coaster has cleared the point");
 
       clearedPoint = true;
     }
@@ -295,6 +300,10 @@ void eStopMode()
 
 void activateEStop(int faultKey)
 { ///int faultKey
+
+  dispatchReady = false;
+  digitalWrite(dispatchReadyLEDPin, dispatchReady);
+
   lcdControllerInstance.updateUpperString("Fault:");
   switch (faultKey)
   {
@@ -339,7 +348,6 @@ void dispatchMode()
   brake_motor.updateDirection(1);
 
   int dispatchButton = !digitalRead(dispatchButtonPin);
-       
 
   digitalWrite(stationOCLedPin, stationOC);
   digitalWrite(layoutOCLedPin, layoutOC);
@@ -362,10 +370,19 @@ void dispatchMode()
   { //Stn trig unexp -> staton triggered unexpectidly
     activateEStop(1);
   }
+  else if ((StationSensor == HIGH) && (liftOC == 0) && !(dispatchButton == 1) && clearedPoint) // will turn on dispatch LED
+  {
+    if (!dispatchReady)
+    {
+      dispatchReady = true;
+      digitalWrite(dispatchReadyLEDPin, dispatchReady);
+    }
+  }
   else if ((StationSensor == HIGH) && (liftOC == 0) && (dispatchButton == 1) && clearedPoint)
   {
-    while (digitalRead(dispatchButtonPin) == 1){
-        Serial.println(dispatchButton);
+    while (digitalRead(dispatchButtonPin) == 1)
+    {
+      Serial.println(dispatchButton);
     }
 
     lcdControllerInstance.updateDispatch();
@@ -373,6 +390,8 @@ void dispatchMode()
     station_motor.updateMotorSpeed(stationSpeed); //FOR REAL APPLICATION use analogWrite()
     lift_motor.updateMotorSpeed(liftSpeed);
     liftOC = true;
+    dispatchReady = false;
+    digitalWrite(dispatchReadyLEDPin, dispatchReady);
   }
   if (liftSensor == HIGH)
   {
@@ -429,13 +448,20 @@ void showMode()
   {
     time = millis(); //when pressed the time is set to the current time
   }
-  
+
   if (time != -1 && millis() < time + 60000) //60000
   {
     run = true; //as long as the recorder time + a minute is greater than the current time the train will run
+    dispatchReady = false;
+    digitalWrite(dispatchReadyLEDPin, dispatchReady);
   }
   else
   {
+    if (!dispatchReady)
+    {
+      dispatchReady = true;
+      digitalWrite(dispatchReadyLEDPin, dispatchReady);
+    }
     run = false;
   }
 
@@ -457,16 +483,13 @@ void showMode()
 
   //Serial.println("Printing");
 
-    Serial.print(liftOC);
+  Serial.print(liftOC);
   Serial.println(clearedPoint);
 
   if (stationOC == false && StationSensor == HIGH)
   { //if station sensor is triggered, lift not occupied, and run is true but station is not activated estop wil activate
     activateEStop(1);
   }
-  
-
-
   else if ((StationSensor == HIGH) && liftOC == 0 && run && clearedPoint)
   {
     Serial.println("dispatch triggered");
@@ -519,7 +542,7 @@ void maintenanceMode()
 {
 
   lcdControllerInstance.updateUpperString("Maintenance Mode");
-  
+
   if (stationSwitch.getState() == left)
   {
     station_motor.updateMotorSpeed(maintenanceSpeed);
@@ -529,10 +552,12 @@ void maintenanceMode()
   {
     station_motor.updateMotorSpeed(maintenanceSpeed);
     station_motor.updateDirection(0);
-  } else{
-        station_motor.updateMotorSpeed(0);
   }
-  
+  else
+  {
+    station_motor.updateMotorSpeed(0);
+  }
+
   if (brakeRunSwitch.getState() == left)
   {
     Serial.println("Left");
@@ -544,8 +569,10 @@ void maintenanceMode()
     Serial.println("Right");
     brake_motor.updateMotorSpeed(maintenanceSpeed);
     brake_motor.updateDirection(0);
-  } else{
-        brake_motor.updateMotorSpeed(0);
+  }
+  else
+  {
+    brake_motor.updateMotorSpeed(0);
   }
   if (liftSwitch.getState() == left)
   {
@@ -556,8 +583,10 @@ void maintenanceMode()
   {
     lift_motor.updateMotorSpeed(maintenanceSpeed);
     lift_motor.updateDirection(0);
-  } else{
-        lift_motor.updateMotorSpeed(0);
+  }
+  else
+  {
+    lift_motor.updateMotorSpeed(0);
   }
 }
 
