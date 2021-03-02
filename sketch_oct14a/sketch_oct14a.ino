@@ -30,6 +30,7 @@ int stationOCLedPin = 0;
 int liftOCLedPin = 0;
 int breakRunOCLedPin = 0;
 int layoutOCLedPin = 0;
+int dispatchButtonEnabled = 42;
 
 //Buttons
 int dispatchButtonPin = 11;
@@ -51,7 +52,7 @@ int lastPrebrakeState = 0;
 int lastBrakeState = 0;
 
 //Show mode vars
-int time = -1;
+unsigned long time = 0;
 bool run = false;
 
 enum mode
@@ -326,7 +327,7 @@ void activateEStop(int faultKey)
   digitalWrite(eStopLedPin, 1);
   curMode = eStop;
   //Reset show mode
-  time = -1;
+  time = 0;
 }
 
 //Will only allow the next coaster to go when an input is given
@@ -419,25 +420,30 @@ void dispatchMode()
 void showMode()
 {
   lcdControllerInstance.updateUpperString("Show Mode");
-  station_motor.updateDirection(1);
-  lift_motor.updateDirection(1);
-  brake_motor.updateDirection(1);
 
   //if the the button pin is pressed the trains will continue to run for 1 minute
   int dispatchButton = not digitalRead(dispatchButtonPin);
   if (dispatchButton == 1)
   {
+    Serial.println("Starting timer");
     time = millis(); //when pressed the time is set to the current time
+    Serial.println(time);
   }
   
-  if (time != -1 && millis() < time + 60000) //60000
+  if (time != 0 && millis() < time + 60000) //60000
   {
     run = true; //as long as the recorder time + a minute is greater than the current time the train will run
   }
   else
   {
+    Serial.println("End timer");
     run = false;
   }
+
+ station_motor.updateDirection(1); //HIGH
+  lift_motor.updateDirection(1);
+  brake_motor.updateDirection(1);
+       
 
   digitalWrite(stationOCLedPin, stationOC);
   digitalWrite(layoutOCLedPin, layoutOC);
@@ -449,40 +455,34 @@ void showMode()
   ISRPreBrake();
   ISRStation();
   ISRClearedPoint();
+  //Serial.println(layout_OC);
 
   int StationSensor = not digitalRead(stationSensorPin);
   int liftSensor = not digitalRead(liftSensorPin);
   int brakeSensor = not digitalRead(brakeSensorPin);
   int preBrakeSensor = not digitalRead(preBrakeSensorPin);
 
-  //Serial.println("Printing");
-
-    Serial.print(liftOC);
-  Serial.println(clearedPoint);
-
   if (stationOC == false && StationSensor == HIGH)
-  { //if station sensor is triggered, lift not occupied, and run is true but station is not activated estop wil activate
+  { //Stn trig unexp -> staton triggered unexpectidly
     activateEStop(1);
   }
-  
-
-
-  else if ((StationSensor == HIGH) && liftOC == 0 && run && clearedPoint)
+  else if ((StationSensor == HIGH) && (liftOC == 0) && run && clearedPoint)
   {
-    Serial.println("dispatch triggered");
-    station_motor.updateMotorSpeed(stationSpeed);
+    lcdControllerInstance.updateDispatch();
+    Serial.println("button pressed here");        //FOR REAL APPLICATION use analogWrite()
+    station_motor.updateMotorSpeed(stationSpeed); //FOR REAL APPLICATION use analogWrite()
     lift_motor.updateMotorSpeed(liftSpeed);
     liftOC = true;
   }
-
   if (liftSensor == HIGH)
   {
     if (liftOC == false)
-    { //If lift sensor is triggered but lift is not activated estop will activate
-      activateEStop(2);
+    {                   //If lift sensor is triggered but lift is not activated estop will activate
+      activateEStop(2); //lft trig unexp
     }
     else if (brakeRunOC == true || layoutOC == true)
     {
+
       lift_motor.updateMotorSpeed(0);
     }
     else
@@ -494,14 +494,15 @@ void showMode()
   if (brakeSensor == HIGH)
   {
     if (brakeRunOC == false)
-    { //If brake sensor is triggered but brake is not occupied eStop will activte
-      activateEStop(3);
+    { //If the brake sensor is triggered when brake is not occupied estop will trigger
+      Serial.println("break run not occupied");
+      activateEStop(3); // brk trig unex
     }
     else if (stationOC == false)
-    {
-
+    { //FOR REAL APPLICATION use analogWrite()
       station_motor.updateMotorSpeed(stationSpeed);
-      station_motor.updateMotorSpeed(brakeSpeed);
+      brake_motor.updateMotorSpeed(brakeSpeed);
+      //Serial.println("Setting the speed");
     }
     else
     {
